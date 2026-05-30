@@ -180,11 +180,35 @@ sequenceDiagram
 | `SUPER_ADMIN` | Top admin — CRUD for subordinate `ADMIN` accounts |
 | `ADMIN` | Sub-admin, created by `SUPER_ADMIN` |
 
+### Email verification (Gmail SMTP)
+
+Registration requires a verified email when `mealbridge.email-verification.enabled=true` (default in `application-local.yml.example`).
+
+1. `POST /user-service/auth/email/verification/send` — `{ "email": "you@example.com" }` sends a 6-digit code (Gmail SMTP).
+2. `POST /user-service/auth/email/verification/confirm` — `{ "email": "...", "code": "123456" }` marks the address verified in Redis (30 min).
+3. `POST /user-service/auth/register/organization` or `/register/donor` — rejected until step 2 succeeded for that email.
+
+**Gmail setup (local):**
+
+1. Google Account → Security → turn on **2-Step Verification**.
+2. Create an **App password** (Mail / Other) and copy the 16-character value.
+3. In `user-service` environment or shell:
+
+```bash
+export GMAIL_USERNAME=your-account@gmail.com
+export GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+4. Copy `application-local.yml.example` → `application-local.yml` (mail section is included).
+
+**Dev without Gmail:** set `EMAIL_VERIFICATION_DEV_CODE=123456` — the server always uses that code and logs it; the UI flow stays the same.
+
 ### Registration and approval
 
-1. **Public signup** — `POST /user-service/auth/register/organization` or `/auth/register/donor` → account `PENDING` (no cookies).
-2. **SUPER_ADMIN** lists `GET /user-service/admin/registrations/pending`, reviews detail, then `PATCH .../approve` or `.../reject`.
-3. After approval, user can **login** normally.
+1. **Email verification** (if enabled) — send + confirm code for the signup email.
+2. **Public signup** — `POST /user-service/auth/register/organization` or `/auth/register/donor` → account `PENDING` (no cookies).
+3. **SUPER_ADMIN** lists `GET /user-service/admin/registrations/pending`, reviews detail, then `PATCH .../approve` or `.../reject`.
+4. After approval, user can **login** normally.
 
 **ADMIN accounts** are not self-registered; `SUPER_ADMIN` creates them via `POST /user-service/admin/users`.
 
@@ -202,8 +226,10 @@ sequenceDiagram
 
 | Method | Path | Access |
 |--------|------|--------|
-| POST | `/user-service/auth/register/organization` | Public |
-| POST | `/user-service/auth/register/donor` | Public |
+| POST | `/user-service/auth/email/verification/send` | Public |
+| POST | `/user-service/auth/email/verification/confirm` | Public |
+| POST | `/user-service/auth/register/organization` | Public (email verified) |
+| POST | `/user-service/auth/register/donor` | Public (email verified) |
 | POST | `/user-service/auth/login` | Public |
 | POST | `/user-service/auth/refresh` | Public (valid `RT` cookie) |
 | POST | `/user-service/auth/logout` | Authenticated |

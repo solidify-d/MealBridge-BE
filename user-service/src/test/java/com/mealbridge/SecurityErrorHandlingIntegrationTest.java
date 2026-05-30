@@ -42,6 +42,7 @@ class SecurityErrorHandlingIntegrationTest {
 						.phone("01000000001")
 						.role(Role.SUPER_ADMIN)
 						.status(UserStatus.ACTIVE)
+						.emailVerified(true)
 						.build()));
 		superAdminId = superAdmin.getId().toString();
 	}
