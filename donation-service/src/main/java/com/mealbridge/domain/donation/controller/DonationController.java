@@ -4,6 +4,7 @@ import com.mealbridge.common.apiResponse.ApiResponse;
 import com.mealbridge.common.auth.AuthHeaders;
 import com.mealbridge.domain.donation.dto.CreateDonationReq;
 import com.mealbridge.domain.donation.dto.DonationResDto;
+import com.mealbridge.domain.donation.dto.ManualDonationReq;
 import com.mealbridge.domain.donation.service.DonationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,19 @@ public class DonationController {
 		UUID actorId = authHeaders.requireDonor(userId, role);
 		DonationResDto created = donationService.create(actorId, request, beforeImage, afterImage);
 		return ApiResponse.created(created, "Donation registered");
+	}
+
+	@PostMapping(value = "/manual", consumes = "multipart/form-data")
+	public ResponseEntity<?> createManual(
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@Valid @RequestPart("data") ManualDonationReq request,
+			@RequestPart(value = "beforeImage", required = false) MultipartFile beforeImage,
+			@RequestPart(value = "afterImage", required = false) MultipartFile afterImage) {
+
+		UUID actorId = authHeaders.requireDonor(userId, role);
+		DonationResDto created = donationService.createManual(actorId, request, beforeImage, afterImage);
+		return ApiResponse.created(created, "Surplus registered manually");
 	}
 
 	@GetMapping("/me")

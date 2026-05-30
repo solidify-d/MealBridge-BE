@@ -2,6 +2,7 @@ package com.mealbridge.domain.donation.service;
 
 import com.mealbridge.domain.donation.dto.CreateDonationReq;
 import com.mealbridge.domain.donation.dto.DonationResDto;
+import com.mealbridge.domain.donation.dto.ManualDonationReq;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,6 +13,12 @@ public interface DonationService {
 	DonationResDto create(
 			UUID actorUserId,
 			CreateDonationReq request,
+			MultipartFile beforeImage,
+			MultipartFile afterImage);
+
+	DonationResDto createManual(
+			UUID actorUserId,
+			ManualDonationReq request,
 			MultipartFile beforeImage,
 			MultipartFile afterImage);
 

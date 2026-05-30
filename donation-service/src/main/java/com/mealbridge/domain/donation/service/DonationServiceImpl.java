@@ -1,8 +1,10 @@
 package com.mealbridge.domain.donation.service;
 
 import com.mealbridge.common.s3.DonationImageStorage;
+import com.mealbridge.common.util.JsonUtil;
 import com.mealbridge.domain.donation.dto.CreateDonationReq;
 import com.mealbridge.domain.donation.dto.DonationResDto;
+import com.mealbridge.domain.donation.dto.ManualDonationReq;
 import com.mealbridge.domain.donation.entity.Donation;
 import com.mealbridge.domain.donation.entity.DonationStatus;
 import com.mealbridge.domain.donation.repository.DonationRepository;
@@ -41,6 +43,9 @@ public class DonationServiceImpl implements DonationService {
 				.servingEndedAt(request.servingEndedAt())
 				.storageStartedAt(request.storageStartedAt())
 				.notes(request.notes())
+				.mealSessionId(null)
+				.totalWeightKg(null)
+				.lineItemsJson(null)
 				.build();
 		donationRepository.save(donation);
 
@@ -54,6 +59,50 @@ public class DonationServiceImpl implements DonationService {
 			afterUrl = donationImageStorage.upload(
 					donation.getDonorInstitutionId(), donation.getId(), afterImage);
 			donation.updateImages(beforeUrl, afterUrl);
+			return toDto(donation);
+		} catch (RuntimeException e) {
+			donationImageStorage.deleteQuietly(beforeUrl);
+			donationImageStorage.deleteQuietly(afterUrl);
+			donationRepository.delete(donation);
+			throw e;
+		}
+	}
+
+	@Override
+	public DonationResDto createManual(
+			UUID actorUserId,
+			ManualDonationReq request,
+			MultipartFile beforeImage,
+			MultipartFile afterImage) {
+		String lineItemsJson = JsonUtil.toJson(request.lineItems());
+		Donation donation = Donation.builder()
+				.donorInstitutionId(request.donorInstitutionId())
+				.registeredByUserId(actorUserId)
+				.mealType(request.mealType())
+				.menuName(request.menuName().trim())
+				.servingEndedAt(request.servingEndedAt())
+				.storageStartedAt(request.storageStartedAt())
+				.notes(request.notes())
+				.mealSessionId(request.mealSessionId())
+				.totalWeightKg(request.totalWeightKg())
+				.lineItemsJson(lineItemsJson)
+				.build();
+		donationRepository.save(donation);
+
+		String beforeUrl = null;
+		String afterUrl = null;
+		try {
+			if (beforeImage != null && !beforeImage.isEmpty()) {
+				beforeUrl = donationImageStorage.upload(
+						donation.getDonorInstitutionId(), donation.getId(), beforeImage);
+			}
+			if (afterImage != null && !afterImage.isEmpty()) {
+				afterUrl = donationImageStorage.upload(
+						donation.getDonorInstitutionId(), donation.getId(), afterImage);
+			}
+			if (beforeUrl != null || afterUrl != null) {
+				donation.updateImages(beforeUrl, afterUrl);
+			}
 			return toDto(donation);
 		} catch (RuntimeException e) {
 			donationImageStorage.deleteQuietly(beforeUrl);
@@ -127,6 +176,9 @@ public class DonationServiceImpl implements DonationService {
 				donation.getBeforeImageUrl(),
 				donation.getAfterImageUrl(),
 				donation.getNotes(),
+				donation.getMealSessionId(),
+				donation.getTotalWeightKg(),
+				donation.getLineItemsJson(),
 				donation.getCreatedAt(),
 				donation.getUpdatedAt());
 	}
