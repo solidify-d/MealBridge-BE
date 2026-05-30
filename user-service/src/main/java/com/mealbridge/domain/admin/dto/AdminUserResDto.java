@@ -1,10 +1,10 @@
-package com.mealbridge.admin.dto;
+package com.mealbridge.domain.admin.dto;
 
-import com.mealbridge.domain.user.UserStatus;
+import com.mealbridge.domain.user.entity.UserStatus;
 
 import java.util.UUID;
 
-public record AdminUserResponse(
+public record AdminUserResDto(
 		UUID id,
 		String email,
 		String name,
