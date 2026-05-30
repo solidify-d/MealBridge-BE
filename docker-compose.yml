@@ -1,0 +1,35 @@
+# Local development: MySQL (per-service schemas) + Redis
+# Usage: docker compose up -d
+# First run only: init script creates mealbridge_user, mealbridge_donation, ...
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mealbridge-mysql
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mealbridge_user
+      MYSQL_USER: mealbridge
+      MYSQL_PASSWORD: mealbridge
+    volumes:
+      - mealbridge-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-umealbridge", "-pmealbridge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mealbridge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - mealbridge-redis-data:/data
+
+volumes:
+  mealbridge-mysql-data:
+  mealbridge-redis-data:
