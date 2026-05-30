@@ -6,8 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.NoSuchElementException;
 
@@ -62,6 +65,34 @@ public class CommonExceptionHandler {
 				.body(CommonErrorDTO.builder()
 						.status_message(e.getMessage())
 						.status_code(HttpStatus.NOT_FOUND.value())
+						.build());
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<?> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+		String param = e.getName() != null ? e.getName() : "parameter";
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(CommonErrorDTO.builder()
+						.status_message("Invalid " + param)
+						.status_code(HttpStatus.BAD_REQUEST.value())
+						.build());
+	}
+
+	@ExceptionHandler(MissingServletRequestPartException.class)
+	public ResponseEntity<?> handleMissingPart(MissingServletRequestPartException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(CommonErrorDTO.builder()
+						.status_message("Missing multipart part: " + e.getRequestPartName())
+						.status_code(HttpStatus.BAD_REQUEST.value())
+						.build());
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(CommonErrorDTO.builder()
+						.status_message("Missing parameter: " + e.getParameterName())
+						.status_code(HttpStatus.BAD_REQUEST.value())
 						.build());
 	}
 
