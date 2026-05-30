@@ -2,6 +2,7 @@ package com.mealbridge.domain.account.dto;
 
 import com.mealbridge.domain.common.entity.InstitutionStatus;
 import com.mealbridge.domain.donor.entity.DonorInstitutionType;
+import com.mealbridge.domain.donor.entity.PickupAcceptanceMode;
 import com.mealbridge.domain.organization.entity.OrganizationType;
 import com.mealbridge.domain.organization.entity.TargetDemographic;
 import com.mealbridge.domain.user.entity.Role;
@@ -36,6 +37,14 @@ public record MyAccountProfileResDto(
 		String description,
 		String businessRegistrationNumber,
 		String unitIdentifier,
-		InstitutionStatus institutionStatus
+		InstitutionStatus institutionStatus,
+		Double institutionLatitude,
+		Double institutionLongitude,
+		Double organizationLatitude,
+		Double organizationLongitude,
+		Double maxPickupDistanceKm,
+		Double desiredPickupWeightKg,
+		String servingStartTime,
+		PickupAcceptanceMode pickupAcceptanceMode
 ) {
 }

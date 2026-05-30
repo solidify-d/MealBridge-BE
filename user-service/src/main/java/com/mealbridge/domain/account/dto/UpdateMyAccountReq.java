@@ -1,6 +1,7 @@
 package com.mealbridge.domain.account.dto;
 
 import com.mealbridge.domain.donor.entity.DonorInstitutionType;
+import com.mealbridge.domain.donor.entity.PickupAcceptanceMode;
 import com.mealbridge.domain.organization.entity.OrganizationType;
 import com.mealbridge.domain.organization.entity.TargetDemographic;
 import jakarta.validation.constraints.Size;
@@ -25,6 +26,14 @@ public record UpdateMyAccountReq(
 		@Size(max = 1000) String description,
 		@Size(max = 64) String businessRegistrationNumber,
 		@Size(max = 64) String unitIdentifier,
+		Double institutionLatitude,
+		Double institutionLongitude,
+		Double organizationLatitude,
+		Double organizationLongitude,
+		Double maxPickupDistanceKm,
+		Double desiredPickupWeightKg,
+		String servingStartTime,
+		PickupAcceptanceMode pickupAcceptanceMode,
 		Boolean removeProfileImage
 ) {
 }

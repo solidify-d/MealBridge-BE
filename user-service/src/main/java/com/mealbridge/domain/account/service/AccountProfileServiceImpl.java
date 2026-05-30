@@ -7,6 +7,7 @@ import com.mealbridge.domain.account.dto.MyAccountProfileResDto;
 import com.mealbridge.domain.account.dto.ProfileImageUploadResDto;
 import com.mealbridge.domain.account.dto.UpdateMyAccountReq;
 import com.mealbridge.domain.donor.entity.DonorInstitution;
+import com.mealbridge.domain.donor.entity.PickupAcceptanceMode;
 import com.mealbridge.domain.donor.repository.DonorInstitutionRepository;
 import com.mealbridge.domain.organization.entity.Organization;
 import com.mealbridge.domain.organization.repository.OrganizationRepository;
@@ -150,7 +151,12 @@ public class AccountProfileServiceImpl implements AccountProfileService {
 				request.serviceArea(),
 				request.recipientCapacity(),
 				request.targetDemographic(),
-				request.registrationNumber());
+				request.registrationNumber(),
+				request.organizationLatitude(),
+				request.organizationLongitude(),
+				request.maxPickupDistanceKm(),
+				request.desiredPickupWeightKg(),
+				parseServingStartTime(request.servingStartTime()));
 	}
 
 	private void updateDonor(User user, UpdateMyAccountReq request) {
@@ -165,7 +171,10 @@ public class AccountProfileServiceImpl implements AccountProfileService {
 				request.institutionPhone(),
 				request.description(),
 				request.businessRegistrationNumber(),
-				request.unitIdentifier());
+				request.unitIdentifier(),
+				request.institutionLatitude(),
+				request.institutionLongitude(),
+				request.pickupAcceptanceMode());
 	}
 
 	private MyAccountProfileResDto toProfile(User user) {
@@ -206,11 +215,26 @@ public class AccountProfileServiceImpl implements AccountProfileService {
 				donor != null ? donor.getDescription() : null,
 				donor != null ? donor.getBusinessRegistrationNumber() : null,
 				donor != null ? donor.getUnitIdentifier() : null,
-				donor != null ? donor.getStatus() : null);
+				donor != null ? donor.getStatus() : null,
+				donor != null ? donor.getLatitude() : null,
+				donor != null ? donor.getLongitude() : null,
+				org != null ? org.getLatitude() : null,
+				org != null ? org.getLongitude() : null,
+				org != null ? org.getMaxPickupDistanceKm() : null,
+				org != null ? org.getDesiredPickupWeightKg() : null,
+				org != null && org.getServingStartTime() != null ? org.getServingStartTime().toString() : null,
+				donor != null ? donor.getPickupAcceptanceMode() : null);
 	}
 
 	private User requireUser(UUID userId) {
 		return userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("User not found"));
+	}
+
+	private java.time.LocalTime parseServingStartTime(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+		return java.time.LocalTime.parse(value);
 	}
 }
