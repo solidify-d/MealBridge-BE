@@ -20,7 +20,7 @@ spring:
   application:
     name: user-service
   datasource:
-    url: jdbc:mysql://localhost:3310/mealbridge_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/mealbridge_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: mealbridge
     password: mealbridge
     driver-class-name: com.mysql.cj.jdbc.Driver

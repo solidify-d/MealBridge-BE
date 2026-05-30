@@ -20,7 +20,7 @@ spring:
   application:
     name: donation-service
   datasource:
-    url: jdbc:mysql://localhost:3310/mealbridge_donation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/mealbridge_donation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: mealbridge
     password: mealbridge
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -48,3 +48,5 @@ mealbridge:
     internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
     internal-auth:
       enabled: true
+  demo:
+    seed-enabled: true
