@@ -191,10 +191,12 @@ sequenceDiagram
 ### Authorization (NylonMusk community header pattern)
 
 - **API Gateway** validates JWT (cookies) and injects `X-User-Id` / `X-User-Role` on downstream requests.
-- **user-service** has no Spring Security filter chain. Protected controllers call `AuthHeaders` (same idea as NylonMusk community): missing or invalid headers → `SecurityException` → **403** with `CommonErrorDTO`.
-- **Role checks** are explicit per endpoint (`requireSuperAdmin`, `requireAdmin`, `requireOrganization`, `requireDonor`, `requireActiveUser`).
-- **donation-service** uses a lightweight `AuthHeaders` copy (no user DB); sample `GET /donations/me` requires `ORGANIZATION` or `DONOR`.
-- Direct calls to a service **without** going through the gateway skip JWT validation — rely on network policy in production.
+- **user-service** has no Spring Security filter chain. Protected controllers call `AuthHeaders`: verifies **ACTIVE** user in DB, **role header matches DB role**, and required role per endpoint.
+- **Gateway internal secret** — after JWT validation, gateway adds `X-Gateway-Internal-Secret`. Each service rejects protected routes without the matching secret (blocks direct Eureka port access with forged headers). Public routes: `/health`, `/auth/**`.
+- **Auth rate limit** — gateway limits `/auth/login` and `/auth/register/**` per client IP (default 30/min).
+- **Access token TTL** — default 1 hour (`jwt.expirationAt`); refresh via `RT` cookie.
+- **donation-service** uses a lightweight `AuthHeaders` copy (no user DB); sample `GET /donations/me` requires `ORGANIZATION` or `DONOR` role header + gateway secret.
+- **Production** — set `JWT_SECRET_AT`, `JWT_SECRET_RT`, and `GATEWAY_INTERNAL_SECRET` (same value on gateway and all services). Do not expose service ports publicly.
 
 ### Gateway API reference (prefix `/user-service`)
 

@@ -26,18 +26,20 @@ public class RegistrationApprovalCommandController {
 
 	@PatchMapping("/{userId}/approve")
 	public ResponseEntity<?> approve(
+			@RequestHeader(value = "X-User-Id", required = false) String actorId,
 			@RequestHeader(value = "X-User-Role", required = false) String role,
 			@PathVariable UUID userId) {
-		authHeaders.requireSuperAdmin(role);
+		authHeaders.requireActiveSuperAdmin(actorId, role);
 		return ApiResponse.ok(registrationApprovalCommandService.approve(userId), "Registration approved");
 	}
 
 	@PatchMapping("/{userId}/reject")
 	public ResponseEntity<?> reject(
+			@RequestHeader(value = "X-User-Id", required = false) String actorId,
 			@RequestHeader(value = "X-User-Role", required = false) String role,
 			@PathVariable UUID userId,
 			@RequestBody(required = false) @Valid RejectRegistrationReq request) {
-		authHeaders.requireSuperAdmin(role);
+		authHeaders.requireActiveSuperAdmin(actorId, role);
 		String reason = request != null ? request.reason() : null;
 		return ApiResponse.ok(registrationApprovalCommandService.reject(userId, reason), "Registration rejected");
 	}

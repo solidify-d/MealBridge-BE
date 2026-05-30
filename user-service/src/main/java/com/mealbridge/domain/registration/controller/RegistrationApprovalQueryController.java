@@ -22,16 +22,19 @@ public class RegistrationApprovalQueryController {
 	private final RegistrationApprovalQueryService registrationApprovalQueryService;
 
 	@GetMapping("/pending")
-	public ResponseEntity<?> listPending(@RequestHeader(value = "X-User-Role", required = false) String role) {
-		authHeaders.requireSuperAdmin(role);
+	public ResponseEntity<?> listPending(
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role) {
+		authHeaders.requireActiveSuperAdmin(userId, role);
 		return ApiResponse.ok(registrationApprovalQueryService.listPending(), "Pending registrations retrieved");
 	}
 
 	@GetMapping("/{userId}")
 	public ResponseEntity<?> getDetail(
+			@RequestHeader(value = "X-User-Id", required = false) String actorId,
 			@RequestHeader(value = "X-User-Role", required = false) String role,
 			@PathVariable UUID userId) {
-		authHeaders.requireSuperAdmin(role);
+		authHeaders.requireActiveSuperAdmin(actorId, role);
 		return ApiResponse.ok(registrationApprovalQueryService.getDetail(userId), "Registration detail retrieved");
 	}
 }

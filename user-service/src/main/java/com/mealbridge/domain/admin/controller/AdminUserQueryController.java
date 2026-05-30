@@ -19,8 +19,10 @@ public class AdminUserQueryController {
 	private final AdminUserQueryService adminUserQueryService;
 
 	@GetMapping
-	public ResponseEntity<?> listAdmins(@RequestHeader(value = "X-User-Role", required = false) String role) {
-		authHeaders.requireSuperAdmin(role);
+	public ResponseEntity<?> listAdmins(
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role) {
+		authHeaders.requireActiveSuperAdmin(userId, role);
 		return ApiResponse.ok(adminUserQueryService.listAdmins(), "Admin users retrieved");
 	}
 
@@ -28,8 +30,7 @@ public class AdminUserQueryController {
 	public ResponseEntity<?> me(
 			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role) {
-		var actorId = authHeaders.requireActiveUser(userId, role);
-		authHeaders.requireAdmin(role);
+		var actorId = authHeaders.requireActiveAdmin(userId, role);
 		return ApiResponse.ok(adminUserQueryService.getMe(actorId), "Current admin profile");
 	}
 }

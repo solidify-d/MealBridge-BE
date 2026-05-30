@@ -1,5 +1,7 @@
 package com.mealbridge.common.auth;
 
+import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.entity.User;
 import com.mealbridge.domain.user.entity.UserStatus;
 import com.mealbridge.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,43 +35,44 @@ public class AuthHeaders {
 	}
 
 	public UUID requireActiveUser(String userHeader, String roleHeader) {
-		UUID userId = requireUserId(userHeader);
-		requireRole(roleHeader);
-		var user = userRepository.findById(userId)
-				.orElseThrow(() -> new SecurityException("User not found"));
-		if (user.getStatus() != UserStatus.ACTIVE) {
-			throw new SecurityException("Account is not active");
-		}
-		return userId;
+		return loadActiveUser(userHeader, roleHeader, null).getId();
 	}
 
-	public void requireSuperAdmin(String roleHeader) {
-		String role = requireRole(roleHeader);
-		if (!role.equalsIgnoreCase("SUPER_ADMIN")) {
-			throw new SecurityException("SUPER_ADMIN role is required");
-		}
+	public UUID requireActiveSuperAdmin(String userHeader, String roleHeader) {
+		return loadActiveUser(userHeader, roleHeader, Role.SUPER_ADMIN).getId();
 	}
 
-	public void requireAdmin(String roleHeader) {
-		String role = requireRole(roleHeader);
-		if (!role.equalsIgnoreCase("SUPER_ADMIN") && !role.equalsIgnoreCase("ADMIN")) {
-			throw new SecurityException("ADMIN role is required");
-		}
+	public UUID requireActiveAdmin(String userHeader, String roleHeader) {
+		return loadActiveUser(userHeader, roleHeader, Role.ADMIN).getId();
 	}
 
 	public UUID requireOrganization(String userHeader, String roleHeader) {
-		requireActiveUser(userHeader, roleHeader);
-		if (!roleHeader.equalsIgnoreCase("ORGANIZATION")) {
-			throw new SecurityException("ORGANIZATION role is required");
-		}
-		return requireUserId(userHeader);
+		return loadActiveUser(userHeader, roleHeader, Role.ORGANIZATION).getId();
 	}
 
 	public UUID requireDonor(String userHeader, String roleHeader) {
-		requireActiveUser(userHeader, roleHeader);
-		if (!roleHeader.equalsIgnoreCase("DONOR")) {
-			throw new SecurityException("DONOR role is required");
+		return loadActiveUser(userHeader, roleHeader, Role.DONOR).getId();
+	}
+
+	private User loadActiveUser(String userHeader, String roleHeader, Role requiredRole) {
+		UUID userId = requireUserId(userHeader);
+		String role = requireRole(roleHeader);
+
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new SecurityException("User not found"));
+
+		if (user.getStatus() != UserStatus.ACTIVE) {
+			throw new SecurityException("Account is not active");
 		}
-		return requireUserId(userHeader);
+
+		if (!user.getRole().name().equalsIgnoreCase(role)) {
+			throw new SecurityException("Role mismatch");
+		}
+
+		if (requiredRole != null && user.getRole() != requiredRole) {
+			throw new SecurityException(requiredRole.name() + " role is required");
+		}
+
+		return user;
 	}
 }

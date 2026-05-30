@@ -33,7 +33,7 @@ spring:
       port: 6379
 
 jwt:
-  expirationAt: 604800000
+  expirationAt: 3600000
   expirationRt: 1209600000
   secretKeyAt: ${JWT_SECRET_AT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtYWNjZXNzLXNpZ25pbmcta2V5LTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==}
   secretKeyRt: ${JWT_SECRET_RT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtcmVmcmVzaC1zaWduaW5nLWtleS05OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQ==}
@@ -59,3 +59,7 @@ auth:
 mealbridge:
   auth:
     seed-enabled: true
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+    internal-auth:
+      enabled: true

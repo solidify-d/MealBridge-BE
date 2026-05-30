@@ -31,18 +31,18 @@ public class AdminUserCommandController {
 			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role,
 			@Valid @RequestBody CreateAdminReq request) {
-		authHeaders.requireSuperAdmin(role);
-		var actorId = authHeaders.requireActiveUser(userId, role);
+		var actorId = authHeaders.requireActiveSuperAdmin(userId, role);
 		var res = adminUserCommandService.createAdmin(request, actorId);
 		return ApiResponse.created(res, "Admin user created");
 	}
 
 	@PatchMapping("/{id}/status")
 	public ResponseEntity<?> updateStatus(
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role,
 			@PathVariable UUID id,
 			@Valid @RequestBody UpdateAdminStatusReq request) {
-		authHeaders.requireSuperAdmin(role);
+		authHeaders.requireActiveSuperAdmin(userId, role);
 		var res = adminUserCommandService.updateStatus(id, request.status());
 		return ApiResponse.ok(res, "Admin status updated");
 	}
