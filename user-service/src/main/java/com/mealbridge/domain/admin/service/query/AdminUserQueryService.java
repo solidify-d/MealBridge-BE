@@ -9,5 +9,7 @@ public interface AdminUserQueryService {
 
 	List<AdminUserResDto> listAdmins();
 
+	AdminUserResDto getById(UUID id);
+
 	AdminUserResDto getMe(UUID actorId);
 }
