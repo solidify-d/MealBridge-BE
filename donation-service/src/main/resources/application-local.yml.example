@@ -27,3 +27,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+mealbridge:
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+    internal-auth:
+      enabled: true
