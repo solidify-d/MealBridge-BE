@@ -5,6 +5,7 @@ import com.mealbridge.admin.dto.CreateAdminRequest;
 import com.mealbridge.admin.dto.UpdateAdminStatusRequest;
 import com.mealbridge.common.api.ApiResponse;
 import com.mealbridge.common.security.CustomUserPrincipal;
+import com.mealbridge.common.security.AdminOnly;
 import com.mealbridge.common.security.SuperAdminOnly;
 import com.mealbridge.domain.user.Role;
 import com.mealbridge.domain.user.User;
@@ -59,6 +60,9 @@ public class AdminUserController {
 				.email(request.email())
 				.password(passwordEncoder.encode(request.password()))
 				.name(request.name())
+				.phone(request.phone() != null ? request.phone() : "0000000000")
+				.department(request.department())
+				.memo(request.memo())
 				.role(Role.ADMIN)
 				.status(UserStatus.ACTIVE)
 				.createdById(principal.userId())
@@ -86,6 +90,7 @@ public class AdminUserController {
 	}
 
 	@GetMapping("/me")
+	@AdminOnly
 	public ResponseEntity<?> me(@AuthenticationPrincipal CustomUserPrincipal principal) {
 		User user = userRepository.findById(principal.userId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -97,6 +102,9 @@ public class AdminUserController {
 				user.getId(),
 				user.getEmail(),
 				user.getName(),
+				user.getPhone(),
+				user.getDepartment(),
+				user.getMemo(),
 				user.getStatus(),
 				user.getCreatedById()
 		);
