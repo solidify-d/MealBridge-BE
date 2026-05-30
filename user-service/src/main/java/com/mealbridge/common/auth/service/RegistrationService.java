@@ -3,21 +3,20 @@ package com.mealbridge.common.auth.service;
 import com.mealbridge.common.auth.dto.DonorRegisterRequest;
 import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
 import com.mealbridge.common.auth.dto.RegisterResponse;
-import com.mealbridge.domain.common.InstitutionStatus;
-import com.mealbridge.domain.donor.DonorInstitution;
-import com.mealbridge.domain.donor.DonorInstitutionRepository;
-import com.mealbridge.domain.organization.Organization;
-import com.mealbridge.domain.organization.OrganizationRepository;
-import com.mealbridge.domain.user.Role;
-import com.mealbridge.domain.user.User;
-import com.mealbridge.domain.user.UserRepository;
-import com.mealbridge.domain.user.UserStatus;
+import com.mealbridge.common.exception.DuplicateResourceException;
+import com.mealbridge.domain.common.entity.InstitutionStatus;
+import com.mealbridge.domain.donor.entity.DonorInstitution;
+import com.mealbridge.domain.donor.repository.DonorInstitutionRepository;
+import com.mealbridge.domain.organization.entity.Organization;
+import com.mealbridge.domain.organization.repository.OrganizationRepository;
+import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.entity.User;
+import com.mealbridge.domain.user.entity.UserStatus;
+import com.mealbridge.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -99,7 +98,7 @@ public class RegistrationService {
 
 	private void ensureEmailAvailable(String email) {
 		if (userRepository.findByEmail(email).isPresent()) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+			throw new DuplicateResourceException("Email already exists");
 		}
 	}
 }
