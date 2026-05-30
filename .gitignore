@@ -1,0 +1,16 @@
+HELP.md
+.gradle
+build/
+bin/
+out/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.log
+.DS_Store
+Thumbs.db
+
+### Local profile (NylonMusk pattern) ###
+application-local.yml
