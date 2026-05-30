@@ -13,6 +13,7 @@ public record OrganizationProfileResDto(
 		String name,
 		String phone,
 		UserStatus userStatus,
+		String profileImageUrl,
 		UUID organizationId,
 		String organizationName,
 		OrganizationType organizationType,

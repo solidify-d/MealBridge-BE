@@ -1,5 +1,6 @@
 package com.mealbridge.domain.organization.service.query;
 
+import com.mealbridge.common.profileimage.ProfileImageUrlCache;
 import com.mealbridge.domain.organization.dto.OrganizationProfileResDto;
 import com.mealbridge.domain.organization.repository.OrganizationRepository;
 import com.mealbridge.domain.user.repository.UserRepository;
@@ -17,6 +18,7 @@ public class OrganizationProfileQueryServiceImpl implements OrganizationProfileQ
 
 	private final UserRepository userRepository;
 	private final OrganizationRepository organizationRepository;
+	private final ProfileImageUrlCache profileImageUrlCache;
 
 	@Override
 	public OrganizationProfileResDto getProfile(UUID userId) {
@@ -33,6 +35,7 @@ public class OrganizationProfileQueryServiceImpl implements OrganizationProfileQ
 				user.getName(),
 				user.getPhone(),
 				user.getStatus(),
+				profileImageUrlCache.getUrl(user.getId()),
 				org.getId(),
 				org.getName(),
 				org.getType(),

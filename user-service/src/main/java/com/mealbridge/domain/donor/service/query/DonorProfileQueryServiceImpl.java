@@ -1,5 +1,6 @@
 package com.mealbridge.domain.donor.service.query;
 
+import com.mealbridge.common.profileimage.ProfileImageUrlCache;
 import com.mealbridge.domain.donor.dto.DonorProfileResDto;
 import com.mealbridge.domain.donor.repository.DonorInstitutionRepository;
 import com.mealbridge.domain.user.repository.UserRepository;
@@ -17,6 +18,7 @@ public class DonorProfileQueryServiceImpl implements DonorProfileQueryService {
 
 	private final UserRepository userRepository;
 	private final DonorInstitutionRepository donorInstitutionRepository;
+	private final ProfileImageUrlCache profileImageUrlCache;
 
 	@Override
 	public DonorProfileResDto getProfile(UUID userId) {
@@ -33,6 +35,7 @@ public class DonorProfileQueryServiceImpl implements DonorProfileQueryService {
 				user.getName(),
 				user.getPhone(),
 				user.getStatus(),
+				profileImageUrlCache.getUrl(user.getId()),
 				institution.getId(),
 				institution.getName(),
 				institution.getType(),

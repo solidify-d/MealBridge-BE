@@ -1,6 +1,7 @@
 package com.mealbridge.domain.admin.service.command;
 
 import com.mealbridge.common.exception.DuplicateResourceException;
+import com.mealbridge.common.profileimage.ProfileImageUrlCache;
 import com.mealbridge.domain.admin.dto.AdminUserResDto;
 import com.mealbridge.domain.admin.dto.CreateAdminReq;
 import com.mealbridge.domain.admin.dto.UpdateAdminReq;
@@ -24,6 +25,7 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final ProfileImageUrlCache profileImageUrlCache;
 
 	@Override
 	public AdminUserResDto createAdmin(CreateAdminReq request, UUID createdById) {
@@ -73,6 +75,7 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 		if (admin.getStatus() != UserStatus.SUSPENDED) {
 			throw new IllegalStateException("Only suspended admin accounts can be deleted");
 		}
+		profileImageUrlCache.evict(id);
 		userRepository.delete(admin);
 	}
 
@@ -94,6 +97,7 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 				user.getDepartment(),
 				user.getMemo(),
 				user.getStatus(),
+				profileImageUrlCache.getUrl(user.getId()),
 				user.getSuspendReason(),
 				user.getCreatedById()
 		);

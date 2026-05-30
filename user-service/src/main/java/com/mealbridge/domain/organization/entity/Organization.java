@@ -70,4 +70,21 @@ public class Organization extends BaseIdAndTimeEntity {
 	public void updateStatus(InstitutionStatus status) {
 		this.status = status;
 	}
+
+	public void updateProfile(String name, String address, String organizationPhone, String serviceArea,
+			Integer recipientCapacity, TargetDemographic targetDemographic, String registrationNumber) {
+		if (name != null && !name.isBlank()) {
+			this.name = name;
+		}
+		if (address != null && !address.isBlank()) {
+			this.address = address;
+		}
+		if (organizationPhone != null && !organizationPhone.isBlank()) {
+			this.organizationPhone = organizationPhone;
+		}
+		this.serviceArea = serviceArea;
+		this.recipientCapacity = recipientCapacity;
+		this.targetDemographic = targetDemographic;
+		this.registrationNumber = registrationNumber;
+	}
 }

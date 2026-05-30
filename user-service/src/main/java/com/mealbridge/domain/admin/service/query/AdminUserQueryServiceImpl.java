@@ -1,5 +1,6 @@
 package com.mealbridge.domain.admin.service.query;
 
+import com.mealbridge.common.profileimage.ProfileImageUrlCache;
 import com.mealbridge.domain.admin.dto.AdminUserResDto;
 import com.mealbridge.domain.user.entity.Role;
 import com.mealbridge.domain.user.entity.User;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class AdminUserQueryServiceImpl implements AdminUserQueryService {
 
 	private final UserRepository userRepository;
+	private final ProfileImageUrlCache profileImageUrlCache;
 
 	@Override
 	public List<AdminUserResDto> listAdmins() {
@@ -52,6 +54,7 @@ public class AdminUserQueryServiceImpl implements AdminUserQueryService {
 				user.getDepartment(),
 				user.getMemo(),
 				user.getStatus(),
+				profileImageUrlCache.getUrl(user.getId()),
 				user.getSuspendReason(),
 				user.getCreatedById()
 		);
