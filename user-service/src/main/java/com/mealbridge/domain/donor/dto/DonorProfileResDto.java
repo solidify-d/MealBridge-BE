@@ -12,6 +12,7 @@ public record DonorProfileResDto(
 		String name,
 		String phone,
 		UserStatus userStatus,
+		String profileImageUrl,
 		UUID donorInstitutionId,
 		String institutionName,
 		DonorInstitutionType institutionType,

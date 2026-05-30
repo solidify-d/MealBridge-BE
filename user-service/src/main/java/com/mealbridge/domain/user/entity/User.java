@@ -64,6 +64,9 @@ public class User extends BaseIdAndTimeEntity {
 	@Column(name = "suspend_reason", length = 500)
 	private String suspendReason;
 
+	@Column(name = "profile_image_url", length = 1024)
+	private String profileImageUrl;
+
 	@Builder
 	public User(String email, String password, String name, String phone, String department, String memo,
 			Role role, UserStatus status, boolean emailVerified, UUID organizationId, UUID donorInstitutionId,
@@ -114,5 +117,20 @@ public class User extends BaseIdAndTimeEntity {
 
 	public void updatePassword(String encodedPassword) {
 		this.password = encodedPassword;
+	}
+
+	public void updateContactProfile(String name, String phone) {
+		this.name = name;
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
+	}
+
+	public void updateProfileImageUrl(String profileImageUrl) {
+		this.profileImageUrl = profileImageUrl;
+	}
+
+	public void clearProfileImageUrl() {
+		this.profileImageUrl = null;
 	}
 }

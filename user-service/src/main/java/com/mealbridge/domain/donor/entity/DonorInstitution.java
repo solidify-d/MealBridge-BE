@@ -65,4 +65,20 @@ public class DonorInstitution extends BaseIdAndTimeEntity {
 	public void updateStatus(InstitutionStatus status) {
 		this.status = status;
 	}
+
+	public void updateProfile(String name, String address, String institutionPhone, String description,
+			String businessRegistrationNumber, String unitIdentifier) {
+		if (name != null && !name.isBlank()) {
+			this.name = name;
+		}
+		if (address != null && !address.isBlank()) {
+			this.address = address;
+		}
+		if (institutionPhone != null && !institutionPhone.isBlank()) {
+			this.institutionPhone = institutionPhone;
+		}
+		this.description = description;
+		this.businessRegistrationNumber = businessRegistrationNumber;
+		this.unitIdentifier = unitIdentifier;
+	}
 }

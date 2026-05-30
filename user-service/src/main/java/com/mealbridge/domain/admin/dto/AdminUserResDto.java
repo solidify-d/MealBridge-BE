@@ -12,6 +12,7 @@ public record AdminUserResDto(
 		String department,
 		String memo,
 		UserStatus status,
+		String profileImageUrl,
 		String suspendReason,
 		UUID createdById
 ) {
