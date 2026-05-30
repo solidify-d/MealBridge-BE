@@ -2,5 +2,9 @@ package com.mealbridge.domain.donation.entity;
 
 public enum DonationStatus {
 	REGISTERED,
-	CANCELLED
+	ACCEPTED,
+	IN_TRANSIT,
+	COMPLETED,
+	CANCELLED,
+	EXPIRED
 }

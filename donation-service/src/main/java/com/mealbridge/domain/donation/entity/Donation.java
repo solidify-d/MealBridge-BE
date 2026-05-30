@@ -48,6 +48,9 @@ public class Donation extends BaseIdAndTimeEntity {
 	@Column(name = "storage_started_at")
 	private LocalDateTime storageStartedAt;
 
+	@Column(name = "pickup_deadline_at")
+	private LocalDateTime pickupDeadlineAt;
+
 	@Column(name = "before_image_url", length = 1024)
 	private String beforeImageUrl;
 
@@ -66,6 +69,18 @@ public class Donation extends BaseIdAndTimeEntity {
 	@Column(name = "line_items_json", columnDefinition = "TEXT")
 	private String lineItemsJson;
 
+	@Column(name = "accepted_organization_id")
+	private UUID acceptedOrganizationId;
+
+	@Column(name = "accepted_at")
+	private LocalDateTime acceptedAt;
+
+	@Column(name = "in_transit_at")
+	private LocalDateTime inTransitAt;
+
+	@Column(name = "completed_at")
+	private LocalDateTime completedAt;
+
 	@Builder
 	public Donation(
 			UUID donorInstitutionId,
@@ -74,6 +89,7 @@ public class Donation extends BaseIdAndTimeEntity {
 			String menuName,
 			LocalDateTime servingEndedAt,
 			LocalDateTime storageStartedAt,
+			LocalDateTime pickupDeadlineAt,
 			String beforeImageUrl,
 			String afterImageUrl,
 			String notes,
@@ -87,6 +103,7 @@ public class Donation extends BaseIdAndTimeEntity {
 		this.menuName = menuName;
 		this.servingEndedAt = servingEndedAt;
 		this.storageStartedAt = storageStartedAt;
+		this.pickupDeadlineAt = pickupDeadlineAt;
 		this.beforeImageUrl = beforeImageUrl;
 		this.afterImageUrl = afterImageUrl;
 		this.notes = notes;
@@ -100,6 +117,59 @@ public class Donation extends BaseIdAndTimeEntity {
 			throw new IllegalStateException("Only registered donations can be cancelled");
 		}
 		this.status = DonationStatus.CANCELLED;
+	}
+
+	public void accept(UUID organizationId, LocalDateTime acceptedAt) {
+		if (this.status != DonationStatus.REGISTERED) {
+			throw new IllegalStateException("Only registered donations can be accepted");
+		}
+		if (organizationId == null) {
+			throw new IllegalArgumentException("organizationId is required");
+		}
+		if (!isPickupAvailable(com.mealbridge.common.util.KstDates.now())) {
+			throw new IllegalStateException("Donation is no longer available for pickup");
+		}
+		this.status = DonationStatus.ACCEPTED;
+		this.acceptedOrganizationId = organizationId;
+		this.acceptedAt = acceptedAt;
+	}
+
+	public void markInTransit(LocalDateTime at) {
+		if (this.status != DonationStatus.ACCEPTED) {
+			throw new IllegalStateException("Only accepted donations can be marked in transit");
+		}
+		this.status = DonationStatus.IN_TRANSIT;
+		this.inTransitAt = at;
+	}
+
+	public void complete(LocalDateTime at) {
+		if (this.status != DonationStatus.IN_TRANSIT) {
+			throw new IllegalStateException("Only in-transit donations can be completed");
+		}
+		this.status = DonationStatus.COMPLETED;
+		this.completedAt = at;
+	}
+
+	public void releaseFromTransit() {
+		if (this.status != DonationStatus.IN_TRANSIT) {
+			throw new IllegalStateException("Only in-transit donations can be released");
+		}
+		this.status = DonationStatus.REGISTERED;
+		this.acceptedOrganizationId = null;
+		this.acceptedAt = null;
+		this.inTransitAt = null;
+	}
+
+	public void expire() {
+		if (this.status != DonationStatus.REGISTERED) {
+			return;
+		}
+		this.status = DonationStatus.EXPIRED;
+	}
+
+	public boolean isPickupAvailable(LocalDateTime now) {
+		return this.status == DonationStatus.REGISTERED
+				&& (this.pickupDeadlineAt == null || !this.pickupDeadlineAt.isBefore(now));
 	}
 
 	public void updateImages(String beforeImageUrl, String afterImageUrl) {

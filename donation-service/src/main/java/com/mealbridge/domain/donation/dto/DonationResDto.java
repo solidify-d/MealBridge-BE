@@ -16,12 +16,17 @@ public record DonationResDto(
 		String menuName,
 		LocalDateTime servingEndedAt,
 		LocalDateTime storageStartedAt,
+		LocalDateTime pickupDeadlineAt,
 		String beforeImageUrl,
 		String afterImageUrl,
 		String notes,
 		UUID mealSessionId,
 		BigDecimal totalWeightKg,
 		String lineItemsJson,
+		UUID acceptedOrganizationId,
+		LocalDateTime acceptedAt,
+		LocalDateTime inTransitAt,
+		LocalDateTime completedAt,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt
 ) {

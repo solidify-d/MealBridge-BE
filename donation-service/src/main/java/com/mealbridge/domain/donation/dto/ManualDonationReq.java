@@ -20,6 +20,7 @@ public record ManualDonationReq(
 		@NotNull @DecimalMin("0.001") BigDecimal totalWeightKg,
 		LocalDateTime servingEndedAt,
 		LocalDateTime storageStartedAt,
+		LocalDateTime pickupDeadlineAt,
 		String notes,
 		@Valid List<LineItemInput> lineItems
 ) {

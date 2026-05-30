@@ -1,5 +1,6 @@
 package com.mealbridge.domain.donation.service;
 
+import com.mealbridge.domain.donation.dto.AcceptDonationReq;
 import com.mealbridge.domain.donation.dto.CreateDonationReq;
 import com.mealbridge.domain.donation.dto.DonationResDto;
 import com.mealbridge.domain.donation.dto.ManualDonationReq;
@@ -29,4 +30,18 @@ public interface DonationService {
 	DonationResDto getById(UUID id, UUID actorUserId, String role);
 
 	void cancel(UUID id, UUID actorUserId);
+
+	DonationResDto accept(UUID id, UUID actorUserId, AcceptDonationReq request);
+
+	DonationResDto markInTransit(UUID id, UUID actorUserId, UUID organizationId);
+
+	DonationResDto complete(UUID id, UUID actorUserId, UUID organizationId);
+
+	DonationResDto release(UUID id, UUID actorUserId, UUID organizationId);
+
+	DonationResDto getInternalById(UUID id);
+
+	List<DonationResDto> listRegisteredInternal();
+
+	int expireStaleDonations();
 }

@@ -2,9 +2,11 @@ package com.mealbridge.domain.donation.controller;
 
 import com.mealbridge.common.apiResponse.ApiResponse;
 import com.mealbridge.common.auth.AuthHeaders;
+import com.mealbridge.domain.donation.dto.AcceptDonationReq;
 import com.mealbridge.domain.donation.dto.CreateDonationReq;
 import com.mealbridge.domain.donation.dto.DonationResDto;
 import com.mealbridge.domain.donation.dto.ManualDonationReq;
+import com.mealbridge.domain.donation.dto.OrganizationDonationActionReq;
 import com.mealbridge.domain.donation.service.DonationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -89,6 +92,54 @@ public class DonationController {
 		}
 		DonationResDto donation = donationService.getById(id, actorId, actorRole);
 		return ApiResponse.ok(donation, "Donation retrieved");
+	}
+
+	@PostMapping("/{id}/accept")
+	public ResponseEntity<?> accept(
+			@PathVariable UUID id,
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@Valid @RequestBody AcceptDonationReq request) {
+
+		UUID actorId = authHeaders.requireOrganization(userId, role);
+		DonationResDto accepted = donationService.accept(id, actorId, request);
+		return ApiResponse.ok(accepted, "Donation accepted");
+	}
+
+	@PostMapping("/{id}/in-transit")
+	public ResponseEntity<?> markInTransit(
+			@PathVariable UUID id,
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@Valid @RequestBody OrganizationDonationActionReq request) {
+
+		UUID actorId = authHeaders.requireOrganization(userId, role);
+		DonationResDto updated = donationService.markInTransit(id, actorId, request.organizationId());
+		return ApiResponse.ok(updated, "Donation marked in transit");
+	}
+
+	@PostMapping("/{id}/complete")
+	public ResponseEntity<?> complete(
+			@PathVariable UUID id,
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@Valid @RequestBody OrganizationDonationActionReq request) {
+
+		UUID actorId = authHeaders.requireOrganization(userId, role);
+		DonationResDto updated = donationService.complete(id, actorId, request.organizationId());
+		return ApiResponse.ok(updated, "Donation pickup completed");
+	}
+
+	@PostMapping("/{id}/release")
+	public ResponseEntity<?> release(
+			@PathVariable UUID id,
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@Valid @RequestBody OrganizationDonationActionReq request) {
+
+		UUID actorId = authHeaders.requireOrganization(userId, role);
+		DonationResDto updated = donationService.release(id, actorId, request.organizationId());
+		return ApiResponse.ok(updated, "Donation released back to available pool");
 	}
 
 	@DeleteMapping("/{id}")

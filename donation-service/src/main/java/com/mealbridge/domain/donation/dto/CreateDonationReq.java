@@ -13,6 +13,7 @@ public record CreateDonationReq(
 		@NotBlank String menuName,
 		LocalDateTime servingEndedAt,
 		LocalDateTime storageStartedAt,
+		LocalDateTime pickupDeadlineAt,
 		String notes
 ) {
 }
