@@ -53,3 +53,6 @@ spring:
           filters:
             - StripPrefix=1
           uri: lb://ai-service
+
+jwt:
+  secretKeyAt: ${JWT_SECRET_AT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtYWNjZXNzLXNpZ25pbmcta2V5LTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==}
