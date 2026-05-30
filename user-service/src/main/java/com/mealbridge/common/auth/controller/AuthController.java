@@ -5,10 +5,13 @@ import com.mealbridge.common.auth.dto.DonorRegisterRequest;
 import com.mealbridge.common.auth.dto.LoginRequest;
 import com.mealbridge.common.auth.dto.LoginResponse;
 import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
+import com.mealbridge.common.auth.dto.SuspendedAccountInfo;
 import com.mealbridge.common.auth.repository.RefreshTokenStore;
 import com.mealbridge.common.auth.service.AuthCookieService;
 import com.mealbridge.common.auth.service.JwtService;
 import com.mealbridge.common.auth.service.RegistrationService;
+import com.mealbridge.common.config.SupportProperties;
+import com.mealbridge.common.exception.AccountSuspendedException;
 import com.mealbridge.common.exception.UnauthorizedException;
 import com.mealbridge.domain.user.entity.User;
 import com.mealbridge.domain.user.entity.UserStatus;
@@ -40,6 +43,7 @@ public class AuthController {
 	private final RefreshTokenStore refreshTokenStore;
 	private final AuthCookieService authCookieService;
 	private final RegistrationService registrationService;
+	private final SupportProperties supportProperties;
 
 	@PostMapping("/register/organization")
 	public ResponseEntity<?> registerOrganization(@Valid @RequestBody OrganizationRegisterRequest request) {
@@ -58,12 +62,23 @@ public class AuthController {
 		User user = userRepository.findByEmail(request.email())
 				.orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-		if (user.getStatus() != UserStatus.ACTIVE) {
-			throw new UnauthorizedException("Account is not active");
-		}
-
 		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
 			throw new UnauthorizedException("Invalid email or password");
+		}
+
+		if (user.getStatus() == UserStatus.SUSPENDED) {
+			String reason = user.getSuspendReason() != null && !user.getSuspendReason().isBlank()
+					? user.getSuspendReason()
+					: "Your account has been suspended. Please contact support for assistance.";
+			String contactEmail = supportProperties.contactEmail();
+			if (contactEmail == null || contactEmail.isBlank()) {
+				contactEmail = "support@mealbridge.local";
+			}
+			throw new AccountSuspendedException(new SuspendedAccountInfo(reason, contactEmail));
+		}
+
+		if (user.getStatus() != UserStatus.ACTIVE) {
+			throw new UnauthorizedException("Account is not active");
 		}
 
 		String role = user.getRole().name();

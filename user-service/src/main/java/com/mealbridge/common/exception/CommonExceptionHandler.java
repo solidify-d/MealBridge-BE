@@ -37,6 +37,17 @@ public class CommonExceptionHandler {
 						.build());
 	}
 
+	@ExceptionHandler(AccountSuspendedException.class)
+	public ResponseEntity<?> handleAccountSuspended(AccountSuspendedException e) {
+		log.warn("[AccountSuspendedException] {}", e.getMessage());
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(CommonErrorDTO.builder()
+						.status_message("Account suspended")
+						.status_code(HttpStatus.FORBIDDEN.value())
+						.result(e.getInfo())
+						.build());
+	}
+
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException e) {
 		log.error("[IllegalArgumentException] {}", e.getMessage());

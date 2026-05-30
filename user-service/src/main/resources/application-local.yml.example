@@ -68,6 +68,8 @@ auth:
       path: /
 
 mealbridge:
+  support:
+    contact-email: ${SUPPORT_CONTACT_EMAIL:support@mealbridge.local}
   email-verification:
     enabled: true
     code-length: 6
