@@ -103,9 +103,11 @@ public class BedrockVisionService {
 					You analyze a photo of a military/unit cafeteria prepared meal before serving. \
 					Identify each visible dish: main (주식), side dishes (반찬), soup (국). \
 					Estimate per-person serving weight in kg for each dish (1인분), not total batch weight. \
+					For each dish, list comma-separated main ingredients (e.g. pork, gochujang, garlic). \
+					Put actual food ingredients in "ingredients", NOT dish category labels like Side or Soup. \
 					Context JSON may include headcount; still return per-person kg only. Context JSON: %s
 					Respond ONLY with JSON: {"totalDeltaKg": number, "items": [{"name": string, "kg": number, \
-					"category": "MAIN"|"SIDE"|"SOUP", "confidence": 0-1}]}
+					"category": "MAIN"|"SIDE"|"SOUP", "ingredients": string, "confidence": 0-1}]}
 					""".formatted(ctx);
 		}
 		return """
@@ -124,10 +126,18 @@ public class BedrockVisionService {
 			List<VisionItemEstimate> items = new ArrayList<>();
 			if (root.has("items") && root.get("items").isArray()) {
 				for (JsonNode node : root.get("items")) {
+					String ingredients = null;
+					if (node.has("ingredients") && !node.get("ingredients").isNull()) {
+						String ingredientsText = node.get("ingredients").asText("").trim();
+						if (!ingredientsText.isEmpty()) {
+							ingredients = ingredientsText;
+						}
+					}
 					items.add(new VisionItemEstimate(
 							node.path("name").asText("unknown"),
 							BigDecimal.valueOf(node.path("kg").asDouble(0)),
-							node.path("confidence").asDouble(0.5)));
+							node.path("confidence").asDouble(0.5),
+							ingredients));
 				}
 			}
 			if (items.isEmpty()) {
@@ -231,7 +241,7 @@ public class BedrockVisionService {
 			return new VisionAnalyzeResDto(
 					mode,
 					new BigDecimal("1.200"),
-					List.of(new VisionItemEstimate("main dish", new BigDecimal("1.200"), 0.75)),
+					List.of(new VisionItemEstimate("main dish", new BigDecimal("1.200"), 0.75, null)),
 					"{\"mock\":true}",
 					true);
 		}
@@ -240,9 +250,21 @@ public class BedrockVisionService {
 					mode,
 					new BigDecimal("0.450"),
 					List.of(
-							new VisionItemEstimate("제육볶음", new BigDecimal("0.250"), 0.82),
-							new VisionItemEstimate("배추김치", new BigDecimal("0.050"), 0.74),
-							new VisionItemEstimate("된장찌개", new BigDecimal("0.150"), 0.7)),
+							new VisionItemEstimate(
+									"제육볶음",
+									new BigDecimal("0.250"),
+									0.82,
+									"pork, gochujang, onion, garlic"),
+							new VisionItemEstimate(
+									"배추김치",
+									new BigDecimal("0.050"),
+									0.74,
+									"napa cabbage, chili pepper, garlic"),
+							new VisionItemEstimate(
+									"된장찌개",
+									new BigDecimal("0.150"),
+									0.7,
+									"soybean paste, tofu, zucchini")),
 					"{\"mock\":true}",
 					true);
 		}
@@ -250,8 +272,8 @@ public class BedrockVisionService {
 				mode,
 				new BigDecimal("4.500"),
 				List.of(
-						new VisionItemEstimate("main dish", new BigDecimal("2.500"), 0.7),
-						new VisionItemEstimate("side dish", new BigDecimal("2.000"), 0.65)),
+						new VisionItemEstimate("main dish", new BigDecimal("2.500"), 0.7, null),
+						new VisionItemEstimate("side dish", new BigDecimal("2.000"), 0.65, null)),
 				"{\"mock\":true}",
 				true);
 	}

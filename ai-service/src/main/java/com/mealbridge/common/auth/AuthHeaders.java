@@ -34,4 +34,22 @@ public class AuthHeaders {
 		}
 		return userId;
 	}
+
+	public UUID requireOrganization(String userHeader, String roleHeader) {
+		UUID userId = requireUserId(userHeader);
+		String role = requireRole(roleHeader);
+		if (!role.equalsIgnoreCase("ORGANIZATION")) {
+			throw new SecurityException("ORGANIZATION role is required");
+		}
+		return userId;
+	}
+
+	public UUID requireDonorOrOrganization(String userHeader, String roleHeader) {
+		UUID userId = requireUserId(userHeader);
+		String role = requireRole(roleHeader);
+		if (!role.equalsIgnoreCase("DONOR") && !role.equalsIgnoreCase("ORGANIZATION")) {
+			throw new SecurityException("DONOR or ORGANIZATION role is required");
+		}
+		return userId;
+	}
 }

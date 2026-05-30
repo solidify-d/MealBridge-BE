@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record VisionItemEstimate(
 		String name,
 		BigDecimal kg,
-		double confidence
+		double confidence,
+		String ingredients
 ) {
 }
