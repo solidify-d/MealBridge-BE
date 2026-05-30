@@ -1,0 +1,55 @@
+# Copy to application-local.yml (gitignored):
+#   cp application-local.yml.example application-local.yml
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  config:
+    activate:
+      on-profile: local
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - 'http://127.0.0.1:3000'
+              - 'http://localhost:3000'
+            allowed-methods: [ GET, POST, PUT, PATCH, DELETE, OPTIONS ]
+            allowed-headers: [ '*' ]
+            allow-credentials: true
+            max-age: 3600
+      routes:
+        - id: user-service
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://user-service
+        - id: donation-service
+          predicates:
+            - Path=/donation-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://donation-service
+        - id: matching-service
+          predicates:
+            - Path=/matching-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://matching-service
+        - id: ai-service
+          predicates:
+            - Path=/ai-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://ai-service
