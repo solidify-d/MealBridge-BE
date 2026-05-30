@@ -1,4 +1,4 @@
-package com.mealbridge.domain.organization;
+package com.mealbridge.domain.organization.entity;
 
 public enum OrganizationType {
 	WELFARE_CENTER,

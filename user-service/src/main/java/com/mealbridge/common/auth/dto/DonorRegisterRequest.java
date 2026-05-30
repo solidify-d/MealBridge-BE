@@ -1,6 +1,6 @@
 package com.mealbridge.common.auth.dto;
 
-import com.mealbridge.domain.donor.DonorInstitutionType;
+import com.mealbridge.domain.donor.entity.DonorInstitutionType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

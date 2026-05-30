@@ -1,30 +1,26 @@
-package com.mealbridge.domain.donor;
+package com.mealbridge.domain.donor.entity;
 
-import com.mealbridge.domain.common.InstitutionStatus;
+import com.mealbridge.common.domain.BaseIdAndTimeEntity;
+import com.mealbridge.domain.common.entity.InstitutionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "donor_institutions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DonorInstitution {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID id;
+@SQLDelete(sql = "UPDATE donor_institutions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
+public class DonorInstitution extends BaseIdAndTimeEntity {
 
 	@Column(nullable = false, length = 200)
 	private String name;

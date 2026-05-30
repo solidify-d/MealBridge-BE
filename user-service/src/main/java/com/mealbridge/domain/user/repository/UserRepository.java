@@ -1,5 +1,8 @@
-package com.mealbridge.domain.user;
+package com.mealbridge.domain.user.repository;
 
+import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.entity.User;
+import com.mealbridge.domain.user.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.mealbridge.domain.user;
+package com.mealbridge.domain.user.entity;
 
 public enum UserStatus {
 	ACTIVE,

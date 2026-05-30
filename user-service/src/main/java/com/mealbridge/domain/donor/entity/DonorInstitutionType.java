@@ -1,4 +1,4 @@
-package com.mealbridge.domain.donor;
+package com.mealbridge.domain.donor.entity;
 
 public enum DonorInstitutionType {
 	MILITARY,
