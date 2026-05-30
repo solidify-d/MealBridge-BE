@@ -2,10 +2,12 @@ package com.mealbridge.common.auth.controller;
 
 import com.mealbridge.common.apiResponse.ApiResponse;
 import com.mealbridge.common.auth.dto.DonorRegisterRequest;
+import com.mealbridge.common.auth.dto.EmailAvailabilityResponse;
 import com.mealbridge.common.auth.dto.LoginRequest;
 import com.mealbridge.common.auth.dto.LoginResponse;
 import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
 import com.mealbridge.common.auth.dto.SuspendedAccountInfo;
+import com.mealbridge.common.auth.email.EmailVerificationService;
 import com.mealbridge.common.auth.repository.RefreshTokenStore;
 import com.mealbridge.common.auth.service.AuthCookieService;
 import com.mealbridge.common.auth.service.JwtService;
@@ -25,9 +27,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -43,7 +47,14 @@ public class AuthController {
 	private final RefreshTokenStore refreshTokenStore;
 	private final AuthCookieService authCookieService;
 	private final RegistrationService registrationService;
+	private final EmailVerificationService emailVerificationService;
 	private final SupportProperties supportProperties;
+
+	@GetMapping("/email/availability")
+	public ResponseEntity<?> checkEmailAvailability(@RequestParam("email") String email) {
+		EmailAvailabilityResponse body = emailVerificationService.checkAvailability(email);
+		return ApiResponse.ok(body);
+	}
 
 	@PostMapping("/register/organization")
 	public ResponseEntity<?> registerOrganization(@Valid @RequestBody OrganizationRegisterRequest request) {

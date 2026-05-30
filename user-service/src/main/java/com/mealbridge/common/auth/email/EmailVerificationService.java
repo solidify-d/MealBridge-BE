@@ -1,12 +1,18 @@
 package com.mealbridge.common.auth.email;
 
+import com.mealbridge.common.auth.dto.EmailAvailabilityResponse;
+import com.mealbridge.common.auth.dto.EmailVerificationSendRequest;
 import com.mealbridge.common.exception.DuplicateResourceException;
 import com.mealbridge.domain.user.repository.UserRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +23,21 @@ public class EmailVerificationService {
 	private final EmailVerificationProperties properties;
 	private final UserRepository userRepository;
 	private final SecureRandom random = new SecureRandom();
+	private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+	public EmailAvailabilityResponse checkAvailability(String email) {
+		if (email == null || email.isBlank()) {
+			return new EmailAvailabilityResponse(false, false, null);
+		}
+
+		String normalized = normalize(email);
+		if (!isValidEmailFormat(normalized)) {
+			return new EmailAvailabilityResponse(false, false, normalized);
+		}
+
+		boolean available = userRepository.findByEmail(normalized).isEmpty();
+		return new EmailAvailabilityResponse(true, available, normalized);
+	}
 
 	public void sendVerificationCode(String email) {
 		String normalized = normalize(email);
@@ -71,6 +92,12 @@ public class EmailVerificationService {
 		int bound = (int) Math.pow(10, properties.codeLength());
 		int value = random.nextInt(bound / 10, bound);
 		return String.valueOf(value);
+	}
+
+	private boolean isValidEmailFormat(String email) {
+		Set<ConstraintViolation<EmailVerificationSendRequest>> violations =
+				validator.validateValue(EmailVerificationSendRequest.class, "email", email);
+		return violations.isEmpty();
 	}
 
 	private String normalize(String email) {

@@ -7,6 +7,7 @@ import com.mealbridge.common.auth.email.EmailVerificationService;
 import com.mealbridge.common.exception.DuplicateResourceException;
 import com.mealbridge.domain.common.entity.InstitutionStatus;
 import com.mealbridge.domain.donor.entity.DonorInstitution;
+import com.mealbridge.domain.donor.entity.DonorInstitutionType;
 import com.mealbridge.domain.donor.repository.DonorInstitutionRepository;
 import com.mealbridge.domain.organization.entity.Organization;
 import com.mealbridge.domain.organization.repository.OrganizationRepository;
@@ -70,6 +71,9 @@ public class RegistrationService {
 	public RegisterResponse registerDonor(DonorRegisterRequest request) {
 		emailVerificationService.requireVerifiedForRegistration(request.email());
 		ensureEmailAvailable(request.email());
+		validateDonorRegistration(request);
+
+		String unitIdentifier = normalizeOptionalText(request.unitIdentifier());
 
 		DonorInstitution institution = DonorInstitution.builder()
 				.name(request.institutionName())
@@ -78,7 +82,7 @@ public class RegistrationService {
 				.institutionPhone(request.institutionPhone())
 				.description(request.description())
 				.businessRegistrationNumber(request.businessRegistrationNumber())
-				.unitIdentifier(request.unitIdentifier())
+				.unitIdentifier(unitIdentifier)
 				.status(InstitutionStatus.PENDING)
 				.build();
 		donorInstitutionRepository.save(institution);
@@ -106,5 +110,19 @@ public class RegistrationService {
 		if (userRepository.findByEmail(email).isPresent()) {
 			throw new DuplicateResourceException("Email already exists");
 		}
+	}
+
+	private void validateDonorRegistration(DonorRegisterRequest request) {
+		if (request.institutionType() == DonorInstitutionType.MILITARY
+				&& (request.unitIdentifier() == null || request.unitIdentifier().isBlank())) {
+			throw new IllegalArgumentException("Unit identifier is required for military institutions");
+		}
+	}
+
+	private String normalizeOptionalText(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+		return value.trim();
 	}
 }

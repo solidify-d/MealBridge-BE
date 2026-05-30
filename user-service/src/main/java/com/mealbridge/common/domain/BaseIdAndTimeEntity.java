@@ -15,4 +15,8 @@ public abstract class BaseIdAndTimeEntity extends BaseTimeEntity {
 	@GeneratedValue
 	@Column(name = "id", nullable = false, updatable = false)
 	private UUID id;
+
+	public void assignId(UUID id) {
+		this.id = id;
+	}
 }

@@ -54,8 +54,10 @@ class RegistrationIntegrationTest {
 								  "organizationType": "WELFARE_CENTER",
 								  "address": "Seoul Gangnam",
 								  "organizationPhone": "0211112222",
+								  "serviceArea": "Seoul Gangnam",
 								  "recipientCapacity": 30,
-								  "targetDemographic": "ELDERLY"
+								  "targetDemographic": "ELDERLY",
+								  "registrationNumber": "123-45-67890"
 								}
 								""".formatted(email)))
 				.andExpect(status().isCreated())
@@ -99,7 +101,9 @@ class RegistrationIntegrationTest {
 				  "institutionName": "Demo School",
 				  "institutionType": "SCHOOL",
 				  "address": "Busan",
-				  "institutionPhone": "0511112222"
+				  "institutionPhone": "0511112222",
+				  "description": "School cafeteria surplus program",
+				  "businessRegistrationNumber": "123-45-67890"
 				}
 				""".formatted(email);
 

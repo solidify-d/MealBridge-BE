@@ -32,6 +32,12 @@ public class Organization extends BaseIdAndTimeEntity {
 	@Column(nullable = false, length = 500)
 	private String address;
 
+	@Column
+	private Double latitude;
+
+	@Column
+	private Double longitude;
+
 	@Column(name = "organization_phone", nullable = false, length = 32)
 	private String organizationPhone;
 
@@ -48,17 +54,29 @@ public class Organization extends BaseIdAndTimeEntity {
 	@Column(name = "registration_number", length = 64)
 	private String registrationNumber;
 
+	@Column(name = "max_pickup_distance_km")
+	private Double maxPickupDistanceKm;
+
+	@Column(name = "desired_pickup_weight_kg")
+	private Double desiredPickupWeightKg;
+
+	@Column(name = "serving_start_time")
+	private java.time.LocalTime servingStartTime;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 32)
 	private InstitutionStatus status;
 
 	@Builder
-	public Organization(String name, OrganizationType type, String address, String organizationPhone,
+	public Organization(String name, OrganizationType type, String address, Double latitude, Double longitude,
+			String organizationPhone,
 			String serviceArea, Integer recipientCapacity, TargetDemographic targetDemographic,
 			String registrationNumber, InstitutionStatus status) {
 		this.name = name;
 		this.type = type;
 		this.address = address;
+		this.latitude = latitude;
+		this.longitude = longitude;
 		this.organizationPhone = organizationPhone;
 		this.serviceArea = serviceArea;
 		this.recipientCapacity = recipientCapacity;
@@ -72,12 +90,20 @@ public class Organization extends BaseIdAndTimeEntity {
 	}
 
 	public void updateProfile(String name, String address, String organizationPhone, String serviceArea,
-			Integer recipientCapacity, TargetDemographic targetDemographic, String registrationNumber) {
+			Integer recipientCapacity, TargetDemographic targetDemographic, String registrationNumber,
+			Double latitude, Double longitude, Double maxPickupDistanceKm, Double desiredPickupWeightKg,
+			java.time.LocalTime servingStartTime) {
 		if (name != null && !name.isBlank()) {
 			this.name = name;
 		}
 		if (address != null && !address.isBlank()) {
 			this.address = address;
+		}
+		if (latitude != null) {
+			this.latitude = latitude;
+		}
+		if (longitude != null) {
+			this.longitude = longitude;
 		}
 		if (organizationPhone != null && !organizationPhone.isBlank()) {
 			this.organizationPhone = organizationPhone;
@@ -86,5 +112,14 @@ public class Organization extends BaseIdAndTimeEntity {
 		this.recipientCapacity = recipientCapacity;
 		this.targetDemographic = targetDemographic;
 		this.registrationNumber = registrationNumber;
+		if (maxPickupDistanceKm != null) {
+			this.maxPickupDistanceKm = maxPickupDistanceKm;
+		}
+		if (desiredPickupWeightKg != null) {
+			this.desiredPickupWeightKg = desiredPickupWeightKg;
+		}
+		if (servingStartTime != null) {
+			this.servingStartTime = servingStartTime;
+		}
 	}
 }

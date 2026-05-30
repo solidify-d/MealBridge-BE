@@ -32,6 +32,12 @@ public class DonorInstitution extends BaseIdAndTimeEntity {
 	@Column(nullable = false, length = 500)
 	private String address;
 
+	@Column
+	private Double latitude;
+
+	@Column
+	private Double longitude;
+
 	@Column(name = "institution_phone", nullable = false, length = 32)
 	private String institutionPhone;
 
@@ -48,18 +54,26 @@ public class DonorInstitution extends BaseIdAndTimeEntity {
 	@Column(nullable = false, length = 32)
 	private InstitutionStatus status;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "pickup_acceptance_mode", nullable = false, length = 32)
+	private PickupAcceptanceMode pickupAcceptanceMode = PickupAcceptanceMode.PER_MENU;
+
 	@Builder
-	public DonorInstitution(String name, DonorInstitutionType type, String address, String institutionPhone,
+	public DonorInstitution(String name, DonorInstitutionType type, String address, Double latitude, Double longitude,
+			String institutionPhone,
 			String description, String businessRegistrationNumber, String unitIdentifier,
 			InstitutionStatus status) {
 		this.name = name;
 		this.type = type;
 		this.address = address;
+		this.latitude = latitude;
+		this.longitude = longitude;
 		this.institutionPhone = institutionPhone;
 		this.description = description;
 		this.businessRegistrationNumber = businessRegistrationNumber;
 		this.unitIdentifier = unitIdentifier;
 		this.status = status;
+		this.pickupAcceptanceMode = PickupAcceptanceMode.PER_MENU;
 	}
 
 	public void updateStatus(InstitutionStatus status) {
@@ -67,12 +81,19 @@ public class DonorInstitution extends BaseIdAndTimeEntity {
 	}
 
 	public void updateProfile(String name, String address, String institutionPhone, String description,
-			String businessRegistrationNumber, String unitIdentifier) {
+			String businessRegistrationNumber, String unitIdentifier, Double latitude, Double longitude,
+			PickupAcceptanceMode pickupAcceptanceMode) {
 		if (name != null && !name.isBlank()) {
 			this.name = name;
 		}
 		if (address != null && !address.isBlank()) {
 			this.address = address;
+		}
+		if (latitude != null) {
+			this.latitude = latitude;
+		}
+		if (longitude != null) {
+			this.longitude = longitude;
 		}
 		if (institutionPhone != null && !institutionPhone.isBlank()) {
 			this.institutionPhone = institutionPhone;
@@ -80,5 +101,8 @@ public class DonorInstitution extends BaseIdAndTimeEntity {
 		this.description = description;
 		this.businessRegistrationNumber = businessRegistrationNumber;
 		this.unitIdentifier = unitIdentifier;
+		if (pickupAcceptanceMode != null) {
+			this.pickupAcceptanceMode = pickupAcceptanceMode;
+		}
 	}
 }
