@@ -3,6 +3,7 @@ package com.mealbridge.common.auth.service;
 import com.mealbridge.common.auth.dto.DonorRegisterRequest;
 import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
 import com.mealbridge.common.auth.dto.RegisterResponse;
+import com.mealbridge.common.auth.email.EmailVerificationService;
 import com.mealbridge.common.exception.DuplicateResourceException;
 import com.mealbridge.domain.common.entity.InstitutionStatus;
 import com.mealbridge.domain.donor.entity.DonorInstitution;
@@ -26,9 +27,11 @@ public class RegistrationService {
 	private final OrganizationRepository organizationRepository;
 	private final DonorInstitutionRepository donorInstitutionRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final EmailVerificationService emailVerificationService;
 
 	@Transactional
 	public RegisterResponse registerOrganization(OrganizationRegisterRequest request) {
+		emailVerificationService.requireVerifiedForRegistration(request.email());
 		ensureEmailAvailable(request.email());
 
 		Organization organization = Organization.builder()
@@ -51,6 +54,7 @@ public class RegistrationService {
 				.phone(request.phone())
 				.role(Role.ORGANIZATION)
 				.status(UserStatus.PENDING)
+				.emailVerified(true)
 				.organizationId(organization.getId())
 				.build();
 		userRepository.save(user);
@@ -64,6 +68,7 @@ public class RegistrationService {
 
 	@Transactional
 	public RegisterResponse registerDonor(DonorRegisterRequest request) {
+		emailVerificationService.requireVerifiedForRegistration(request.email());
 		ensureEmailAvailable(request.email());
 
 		DonorInstitution institution = DonorInstitution.builder()
@@ -85,6 +90,7 @@ public class RegistrationService {
 				.phone(request.phone())
 				.role(Role.DONOR)
 				.status(UserStatus.PENDING)
+				.emailVerified(true)
 				.donorInstitutionId(institution.getId())
 				.build();
 		userRepository.save(user);

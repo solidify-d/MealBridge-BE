@@ -110,6 +110,7 @@ public class AuthDataInitializer implements ApplicationRunner {
 				.memo(memo)
 				.role(role)
 				.status(UserStatus.ACTIVE)
+				.emailVerified(true)
 				.organizationId(organizationId)
 				.donorInstitutionId(donorInstitutionId)
 				.createdById(createdById)

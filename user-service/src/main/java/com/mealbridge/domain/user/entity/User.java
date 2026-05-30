@@ -49,6 +49,9 @@ public class User extends BaseIdAndTimeEntity {
 	@Column(nullable = false, length = 32)
 	private UserStatus status;
 
+	@Column(name = "email_verified", nullable = false)
+	private boolean emailVerified;
+
 	@Column(name = "organization_id")
 	private UUID organizationId;
 
@@ -60,7 +63,8 @@ public class User extends BaseIdAndTimeEntity {
 
 	@Builder
 	public User(String email, String password, String name, String phone, String department, String memo,
-			Role role, UserStatus status, UUID organizationId, UUID donorInstitutionId, UUID createdById) {
+			Role role, UserStatus status, boolean emailVerified, UUID organizationId, UUID donorInstitutionId,
+			UUID createdById) {
 		this.email = email;
 		this.password = password;
 		this.name = name;
@@ -69,9 +73,14 @@ public class User extends BaseIdAndTimeEntity {
 		this.memo = memo;
 		this.role = role;
 		this.status = status;
+		this.emailVerified = emailVerified;
 		this.organizationId = organizationId;
 		this.donorInstitutionId = donorInstitutionId;
 		this.createdById = createdById;
+	}
+
+	public void markEmailVerified() {
+		this.emailVerified = true;
 	}
 
 	public void updateStatus(UserStatus status) {

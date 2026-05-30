@@ -37,6 +37,7 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 				.memo(request.memo())
 				.role(Role.ADMIN)
 				.status(UserStatus.ACTIVE)
+				.emailVerified(true)
 				.createdById(createdById)
 				.build();
 		userRepository.save(admin);
