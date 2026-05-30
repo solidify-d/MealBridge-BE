@@ -17,7 +17,7 @@ public interface DonationService {
 
 	List<DonationResDto> listMine(UUID actorUserId);
 
-	List<DonationResDto> listAvailableForDonor();
+	List<DonationResDto> listAvailableForOrganization();
 
 	DonationResDto getById(UUID id, UUID actorUserId, String role);
 
