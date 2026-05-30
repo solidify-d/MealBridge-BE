@@ -2,6 +2,7 @@ package com.mealbridge.donor;
 
 import com.mealbridge.common.api.ApiResponse;
 import com.mealbridge.common.security.CustomUserPrincipal;
+import com.mealbridge.common.security.DonorOnly;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/donor")
+@DonorOnly
 public class DonorController {
 
 	@GetMapping("/profile")

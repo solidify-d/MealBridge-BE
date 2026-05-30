@@ -1,6 +1,7 @@
 package com.mealbridge.common.config;
 
 import com.mealbridge.common.security.GatewayHeaderAuthFilter;
+import com.mealbridge.common.security.PublicApiPathMatcher;
 import com.mealbridge.common.security.RestAccessDeniedHandler;
 import com.mealbridge.common.security.RestAuthenticationEntryPoint;
 import com.mealbridge.common.security.UserActiveGuardFilter;
@@ -14,10 +15,13 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.mealbridge.common.security.PublicApiPathMatcher;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * NylonMusk mkx-platform style: coarse path rules + {@code @PreAuthorize} on controllers.
+ * Fine-grained roles (SUPER_ADMIN-only registration approval) live on annotations, not here.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -41,9 +45,8 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(new PublicApiPathMatcher()).permitAll()
+						.requestMatchers("/error").permitAll()
 						.requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-						.requestMatchers("/organization/**").hasRole("ORGANIZATION")
-						.requestMatchers("/donor/**").hasRole("DONOR")
 						.anyRequest().authenticated()
 				)
 				.exceptionHandling(ex -> ex

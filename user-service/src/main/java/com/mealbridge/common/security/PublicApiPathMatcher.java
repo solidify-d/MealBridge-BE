@@ -24,7 +24,8 @@ public final class PublicApiPathMatcher implements RequestMatcher {
 	private static boolean isAuthPath(String uri) {
 		return uri.startsWith("/auth")
 				|| uri.startsWith("/auth/")
-				|| uri.contains("/auth/");
+				|| uri.contains("/auth/")
+				|| uri.contains("/auth/register/");
 	}
 
 	private static boolean isHealthPath(String uri) {
