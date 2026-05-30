@@ -15,10 +15,22 @@
           "const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);",
           "const path = pm.request.url.getPath();",
           "const authWhitelist = path.includes('/auth/');",
+          "function resolveCsrfToken() {",
+          "  const baseUrl = pm.environment.get('baseUrl') || 'http://localhost:8080';",
+          "  let csrf = pm.environment.get('csrfToken');",
+          "  if (csrf) return csrf;",
+          "  csrf = pm.cookies.get('CSRF-TOKEN', baseUrl);",
+          "  if (csrf) { pm.environment.set('csrfToken', csrf); return csrf; }",
+          "  csrf = pm.cookies.get('CSRF-TOKEN');",
+          "  if (csrf) { pm.environment.set('csrfToken', csrf); return csrf; }",
+          "  return null;",
+          "}",
           "if (needsCsrf && !authWhitelist) {",
-          "  const csrf = pm.cookies.get('CSRF-TOKEN');",
+          "  const csrf = resolveCsrfToken();",
           "  if (csrf) {",
           "    pm.request.headers.upsert({ key: 'X-CSRF-Token', value: csrf });",
+          "  } else {",
+          "    console.warn('CSRF-TOKEN missing — run Login first. Mutating requests will return 403 Invalid CSRF token.');",
           "  }",
           "}"
         ]
@@ -83,7 +95,10 @@
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
-                  "pm.test('Role SUPER_ADMIN', () => pm.expect(json.result.role).to.eql('SUPER_ADMIN'));"
+                  "pm.test('Role SUPER_ADMIN', () => pm.expect(json.result.role).to.eql('SUPER_ADMIN'));",
+                  "const baseUrl = pm.environment.get('baseUrl') || 'http://localhost:8080';",
+                  "const csrf = pm.cookies.get('CSRF-TOKEN', baseUrl) || pm.cookies.get('CSRF-TOKEN');",
+                  "if (csrf) pm.environment.set('csrfToken', csrf);"
                 ],
                 "type": "text/javascript"
               }
@@ -217,6 +232,20 @@
         },
         {
           "name": "Approve Registration",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const userId = pm.environment.get('pendingUserId');",
+                  "if (!userId || String(userId).trim() === '') {",
+                  "  throw new Error('pendingUserId is empty. Run Register — Organization or List Pending first.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
             "header": [],
@@ -375,6 +404,82 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/user-service/organization/profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Negative (CSRF & path)",
+      "description": "Run **Login — SUPER_ADMIN** first unless noted.",
+      "item": [
+        {
+          "name": "Approve without CSRF header — 403",
+          "description": "Proves CSRF 403 is unrelated to pendingUserId. Login first, then run.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.remove('X-CSRF-Token');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid CSRF token', () => pm.response.to.have.status(403));",
+                  "pm.test('CSRF message', () => pm.expect(pm.response.json().status_message).to.include('CSRF'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations/00000000-0000-0000-0000-000000000001/approve"
+          }
+        },
+        {
+          "name": "Approve invalid UUID — 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Bad request', () => pm.response.to.have.status(400));",
+                  "pm.test('Invalid userId', () => pm.expect(pm.response.json().status_message).to.eql('Invalid userId'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations/not-a-uuid/approve"
+          }
+        },
+        {
+          "name": "Approve empty userId path — 405",
+          "description": "Empty {{pendingUserId}} collapses to /registrations/approve — no PATCH handler (not CSRF).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Method not allowed', () => pm.response.to.have.status(405));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations//approve"
           }
         }
       ]

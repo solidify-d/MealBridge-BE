@@ -1,6 +1,7 @@
 package com.mealbridge.common.auth.filter;
 
 import com.mealbridge.common.apiResponse.GatewayErrorResponse;
+import com.mealbridge.common.auth.GatewayAuthConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -51,15 +52,20 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 	private static final Set<String> STRIP_HEADERS = Set.of(
 			"X-User-Id",
 			"X-User-Role",
-			"X-User-Email"
+			"X-User-Email",
+			GatewayAuthConstants.INTERNAL_SECRET_HEADER
 	);
 
 	private final String secretKeyValue;
+	private final String gatewayInternalSecret;
 	private final AntPathMatcher matcher = new AntPathMatcher();
 	private SecretKey atKey;
 
-	public JwtAuthFilter(@Value("${jwt.secretKeyAt}") String secretKeyAtValue) {
+	public JwtAuthFilter(
+			@Value("${jwt.secretKeyAt}") String secretKeyAtValue,
+			@Value("${mealbridge.gateway.internal-secret}") String gatewayInternalSecret) {
 		this.secretKeyValue = secretKeyAtValue;
+		this.gatewayInternalSecret = gatewayInternalSecret;
 	}
 
 	@PostConstruct
@@ -105,7 +111,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
 			ServerHttpRequest.Builder builder = stripSpoofedHeaders(exchange).getRequest().mutate()
 					.header("X-User-Id", userId)
-					.header("X-User-Role", role);
+					.header("X-User-Role", role)
+					.header(GatewayAuthConstants.INTERNAL_SECRET_HEADER, gatewayInternalSecret);
 			if (!email.isBlank()) {
 				builder.header("X-User-Email", email);
 			}
