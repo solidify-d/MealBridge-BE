@@ -93,7 +93,7 @@ bash scripts/setup-local-config.sh --sync
 
 | Service | Host | Notes |
 |---------|------|--------|
-| MySQL | `localhost:3310` | Maps to container `3306`; user/pass `mealbridge` / `mealbridge` |
+| MySQL | `localhost:13306` | Maps to container `3306`; user/pass `mealbridge` / `mealbridge` |
 | Redis | `localhost:6379` | Refresh token store for `user-service` |
 
 ### MySQL databases (one instance, four schemas)
