@@ -1,11 +1,14 @@
 package com.mealbridge.common.auth.controller;
 
 import com.mealbridge.common.api.ApiResponse;
+import com.mealbridge.common.auth.dto.DonorRegisterRequest;
 import com.mealbridge.common.auth.dto.LoginRequest;
 import com.mealbridge.common.auth.dto.LoginResponse;
+import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
 import com.mealbridge.common.auth.repository.RefreshTokenStore;
 import com.mealbridge.common.auth.service.AuthCookieService;
 import com.mealbridge.common.auth.service.JwtService;
+import com.mealbridge.common.auth.service.RegistrationService;
 import com.mealbridge.domain.user.User;
 import com.mealbridge.domain.user.UserRepository;
 import com.mealbridge.domain.user.UserStatus;
@@ -14,6 +17,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +39,29 @@ public class AuthController {
 	private final PasswordEncoder passwordEncoder;
 	private final RefreshTokenStore refreshTokenStore;
 	private final AuthCookieService authCookieService;
+	private final RegistrationService registrationService;
+
+	@PostMapping("/register/organization")
+	public ResponseEntity<?> registerOrganization(@Valid @RequestBody OrganizationRegisterRequest request) {
+		var body = registrationService.registerOrganization(request);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(new com.mealbridge.common.api.ApiResponseBody<>(
+						HttpStatus.CREATED.value(),
+						body.message(),
+						body
+				));
+	}
+
+	@PostMapping("/register/donor")
+	public ResponseEntity<?> registerDonor(@Valid @RequestBody DonorRegisterRequest request) {
+		var body = registrationService.registerDonor(request);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(new com.mealbridge.common.api.ApiResponseBody<>(
+						HttpStatus.CREATED.value(),
+						body.message(),
+						body
+				));
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
