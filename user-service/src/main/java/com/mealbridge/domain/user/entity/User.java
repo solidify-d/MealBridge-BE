@@ -61,6 +61,9 @@ public class User extends BaseIdAndTimeEntity {
 	@Column(name = "created_by_id")
 	private UUID createdById;
 
+	@Column(name = "suspend_reason", length = 500)
+	private String suspendReason;
+
 	@Builder
 	public User(String email, String password, String name, String phone, String department, String memo,
 			Role role, UserStatus status, boolean emailVerified, UUID organizationId, UUID donorInstitutionId,
@@ -84,10 +87,32 @@ public class User extends BaseIdAndTimeEntity {
 	}
 
 	public void updateStatus(UserStatus status) {
+		updateStatus(status, null);
+	}
+
+	public void updateStatus(UserStatus status, String suspendReason) {
 		this.status = status;
+		if (status == UserStatus.SUSPENDED) {
+			this.suspendReason = suspendReason != null ? suspendReason.trim() : null;
+		} else {
+			this.suspendReason = null;
+		}
 	}
 
 	public void updateMemo(String memo) {
 		this.memo = memo;
+	}
+
+	public void updateAdminProfile(String name, String phone, String department, String memo) {
+		this.name = name;
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
+		this.department = department;
+		this.memo = memo;
+	}
+
+	public void updatePassword(String encodedPassword) {
+		this.password = encodedPassword;
 	}
 }
