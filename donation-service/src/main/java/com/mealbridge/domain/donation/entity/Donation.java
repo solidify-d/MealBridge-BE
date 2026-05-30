@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -56,6 +57,15 @@ public class Donation extends BaseIdAndTimeEntity {
 	@Column(length = 1000)
 	private String notes;
 
+	@Column(name = "meal_session_id")
+	private UUID mealSessionId;
+
+	@Column(name = "total_weight_kg", precision = 12, scale = 3)
+	private BigDecimal totalWeightKg;
+
+	@Column(name = "line_items_json", columnDefinition = "TEXT")
+	private String lineItemsJson;
+
 	@Builder
 	public Donation(
 			UUID donorInstitutionId,
@@ -66,7 +76,10 @@ public class Donation extends BaseIdAndTimeEntity {
 			LocalDateTime storageStartedAt,
 			String beforeImageUrl,
 			String afterImageUrl,
-			String notes) {
+			String notes,
+			UUID mealSessionId,
+			BigDecimal totalWeightKg,
+			String lineItemsJson) {
 		this.donorInstitutionId = donorInstitutionId;
 		this.registeredByUserId = registeredByUserId;
 		this.status = DonationStatus.REGISTERED;
@@ -77,6 +90,9 @@ public class Donation extends BaseIdAndTimeEntity {
 		this.beforeImageUrl = beforeImageUrl;
 		this.afterImageUrl = afterImageUrl;
 		this.notes = notes;
+		this.mealSessionId = mealSessionId;
+		this.totalWeightKg = totalWeightKg;
+		this.lineItemsJson = lineItemsJson;
 	}
 
 	public void cancel() {

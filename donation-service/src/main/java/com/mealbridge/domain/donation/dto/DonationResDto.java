@@ -3,6 +3,7 @@ package com.mealbridge.domain.donation.dto;
 import com.mealbridge.domain.donation.entity.DonationStatus;
 import com.mealbridge.domain.donation.entity.MealType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,6 +19,9 @@ public record DonationResDto(
 		String beforeImageUrl,
 		String afterImageUrl,
 		String notes,
+		UUID mealSessionId,
+		BigDecimal totalWeightKg,
+		String lineItemsJson,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt
 ) {
