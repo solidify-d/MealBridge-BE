@@ -3,7 +3,9 @@ package com.mealbridge.domain.admin.service.command;
 import com.mealbridge.common.exception.DuplicateResourceException;
 import com.mealbridge.domain.admin.dto.AdminUserResDto;
 import com.mealbridge.domain.admin.dto.CreateAdminReq;
+import com.mealbridge.domain.admin.dto.UpdateAdminReq;
 import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.service.UserStatusUpdateSupport;
 import com.mealbridge.domain.user.entity.User;
 import com.mealbridge.domain.user.entity.UserStatus;
 import com.mealbridge.domain.user.repository.UserRepository;
@@ -45,14 +47,42 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 	}
 
 	@Override
-	public AdminUserResDto updateStatus(UUID id, UserStatus status) {
+	public AdminUserResDto updateAdmin(UUID id, UpdateAdminReq request) {
+		User admin = requireSubAdmin(id);
+		admin.updateAdminProfile(
+				request.name(),
+				request.phone(),
+				request.department(),
+				request.memo());
+		if (request.password() != null && !request.password().isBlank()) {
+			admin.updatePassword(passwordEncoder.encode(request.password()));
+		}
+		return toResponse(admin);
+	}
+
+	@Override
+	public AdminUserResDto updateStatus(UUID id, UserStatus status, String reason) {
+		User admin = requireSubAdmin(id);
+		UserStatusUpdateSupport.applyStatus(admin, status, reason);
+		return toResponse(admin);
+	}
+
+	@Override
+	public void deleteAdmin(UUID id) {
+		User admin = requireSubAdmin(id);
+		if (admin.getStatus() != UserStatus.SUSPENDED) {
+			throw new IllegalStateException("Only suspended admin accounts can be deleted");
+		}
+		userRepository.delete(admin);
+	}
+
+	private User requireSubAdmin(UUID id) {
 		User admin = userRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Admin not found"));
 		if (admin.getRole() != Role.ADMIN) {
 			throw new IllegalArgumentException("User is not a sub-admin");
 		}
-		admin.updateStatus(status);
-		return toResponse(admin);
+		return admin;
 	}
 
 	private AdminUserResDto toResponse(User user) {
@@ -64,6 +94,7 @@ public class AdminUserCommandServiceImpl implements AdminUserCommandService {
 				user.getDepartment(),
 				user.getMemo(),
 				user.getStatus(),
+				user.getSuspendReason(),
 				user.getCreatedById()
 		);
 	}

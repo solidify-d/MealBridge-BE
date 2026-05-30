@@ -27,6 +27,16 @@ public class AdminUserQueryServiceImpl implements AdminUserQueryService {
 	}
 
 	@Override
+	public AdminUserResDto getById(UUID id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("User not found"));
+		if (user.getRole() != Role.ADMIN) {
+			throw new IllegalArgumentException("User is not a sub-admin");
+		}
+		return toResponse(user);
+	}
+
+	@Override
 	public AdminUserResDto getMe(UUID actorId) {
 		User user = userRepository.findById(actorId)
 				.orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -42,6 +52,7 @@ public class AdminUserQueryServiceImpl implements AdminUserQueryService {
 				user.getDepartment(),
 				user.getMemo(),
 				user.getStatus(),
+				user.getSuspendReason(),
 				user.getCreatedById()
 		);
 	}

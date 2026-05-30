@@ -46,6 +46,15 @@ public class AuthHeaders {
 		return loadActiveUser(userHeader, roleHeader, Role.ADMIN).getId();
 	}
 
+	/** ADMIN and SUPER_ADMIN may use the admin portal (e.g. GET /admin/users/me). */
+	public UUID requireActiveAdminPortalUser(String userHeader, String roleHeader) {
+		User user = loadActiveUser(userHeader, roleHeader, null);
+		if (user.getRole() != Role.ADMIN && user.getRole() != Role.SUPER_ADMIN) {
+			throw new SecurityException("ADMIN or SUPER_ADMIN role is required");
+		}
+		return user.getId();
+	}
+
 	public UUID requireOrganization(String userHeader, String roleHeader) {
 		return loadActiveUser(userHeader, roleHeader, Role.ORGANIZATION).getId();
 	}
