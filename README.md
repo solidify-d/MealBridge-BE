@@ -1,146 +1,223 @@
 # MealBridge-BE
 
-MealBridge 백엔드 MSA — Spring Boot 3.4 + Spring Cloud 2024.0.0 + Eureka + Gateway.
+Backend microservices for **MealBridge** — surplus food matching between organizations and donor institutions. Built with **Spring Boot 3.4**, **Spring Cloud 2024.0.0**, **Eureka**, and **Spring Cloud Gateway**.
 
-## 모듈 구조
+## What's implemented
 
-| 모듈 | 포트 | 역할 |
-|------|------|------|
-| `eureka` | 8761 (고정) | 서비스 디스커버리 |
-| `apigateway` | 8080 (고정) | API Gateway, CORS, 라우팅 |
-| `user-service` | 0 (랜덤) | 인증·RBAC·조직 프로필 |
-| `donation-service` | 0 (랜덤) | 잔식 등록·기부·증빙·ESG |
-| `matching-service` | 0 (랜덤) | 매칭·수거·알림 |
-| `ai-service` | 0 (랜덤) | 푸드스캔·영양·예측 |
+| Area | Status |
+|------|--------|
+| MSA scaffold (6 modules, Eureka, Gateway routing) | Done |
+| Per-service MySQL schemas + Docker Compose | Done |
+| JWT auth (HttpOnly cookies), refresh tokens (Redis) | Done |
+| Gateway `JwtAuthFilter` + `CsrfFilter` | Done |
+| Four roles + RBAC in `user-service` | Done |
+| Sample APIs (`organization`, `donor`, `admin`, `donations/me`) | Done |
+| Postman collection for local testing | Done |
+| Kafka, OpenFeign domain flows | Planned |
 
-비즈니스 서비스 4개는 `server.port: 0`으로 기동 시 OS가 빈 포트를 할당하고, **Eureka에 실제 포트가 등록**됩니다. Gateway는 `lb://서비스명`으로 조회하므로 고정 포트가 필요 없습니다.
+Architecture follows the **NylonMusk-BE** pattern: the **gateway validates JWT once** and downstream services trust **`X-User-Id`** / **`X-User-Role`** headers.
 
-직접 접속이 필요하면 Eureka 대시보드(http://localhost:8761) 또는 기동 로그에서 할당 포트를 확인하세요.
+## Module layout
 
-각 모듈은 **독립 Gradle 프로젝트** (`be16-fin-3team-NylonMusk-BE`와 동일 패턴).
+| Module | Port | Role |
+|--------|------|------|
+| `eureka` | **8761** (fixed) | Service discovery |
+| `apigateway` | **8080** (fixed) | API Gateway, CORS, JWT, routing |
+| `user-service` | **0** (random) | Auth, RBAC, user/admin APIs |
+| `donation-service` | **0** (random) | Donations (sample endpoint) |
+| `matching-service` | **0** (random) | Matching & pickup (scaffold) |
+| `ai-service` | **0** (random) | Food scan / nutrition (scaffold) |
 
-## 로컬 설정 (NylonMusk 패턴)
+Business services use `server.port: 0`. The OS assigns a free port; **Eureka registers the real port**. The gateway resolves services via `lb://service-name`, so fixed ports are not required.
 
-`application-local.yml`은 **gitignore** 됩니다. 클론 후 한 번만 설정하세요.
+To call a service directly, check the Eureka dashboard (http://localhost:8761) or the service startup log.
 
-**한 번에 생성 (Git Bash):**
+Each module is a **standalone Gradle project** (same layout as `be16-fin-3team-NylonMusk-BE`).
+
+## Prerequisites
+
+- **JDK 17+**
+- **Docker** (MySQL + Redis for local auth)
+- **Git Bash** (optional, for `setup-local-config.sh`)
+
+## Local configuration
+
+`application-local.yml` is **gitignored**. After cloning, generate it once:
 
 ```bash
 bash scripts/setup-local-config.sh
 ```
 
-**또는 모듈별 수동:**
+To reset local YAML from examples (e.g. after pulling JWT secret updates):
+
+```bash
+bash scripts/setup-local-config.sh --sync
+```
+
+**Manual copy (per module):**
 
 ```bash
 cp apigateway/src/main/resources/application-local.yml.example apigateway/src/main/resources/application-local.yml
 cp user-service/src/main/resources/application-local.yml.example user-service/src/main/resources/application-local.yml
-# donation-service, matching-service, ai-service 동일
+# donation-service, matching-service, ai-service — same pattern
 ```
 
-`eureka`는 `application.yml`만 사용합니다 (local 프로필 파일 없음).
+`eureka` uses `application.yml` only (no `local` profile file).
 
-## 요구 사항
+**Important:** `jwt.secretKeyAt` in `user-service` and `apigateway` must match. Default examples use **HS512-ready 64-byte** secrets (Base64-encoded). Override via `JWT_SECRET_AT` / `JWT_SECRET_RT` only if values are at least 512 bits.
 
-- JDK 17+
-
-## 빌드 (모듈별)
-
-```bash
-cd eureka && ./gradlew build
-cd ../apigateway && ./gradlew build
-cd ../user-service && ./gradlew build
-# ... donation-service, matching-service, ai-service 동일
-```
-
-Windows: `gradlew.bat build`
-
-## 로컬 실행 순서
-
-1. `eureka` (8761)
-2. `user-service`, `donation-service`, `matching-service`, `ai-service`
-3. `apigateway` (8080)
-
-Gateway 경유 health 예:
-
-- http://localhost:8080/user-service/health
-- http://localhost:8080/donation-service/health
-
-FE dev server: http://127.0.0.1:3000 (Gateway CORS 허용)
-
-## Postman
-
-[`postman/MealBridge-Local.postman_collection.json`](postman/MealBridge-Local.postman_collection.json) + [`postman/MealBridge-Local.postman_environment.json`](postman/MealBridge-Local.postman_environment.json) — Gateway 경유 API 테스트 (로그인·역할별·CSRF). See [`postman/README.md`](postman/README.md).
-
-## 인프라 (로컬)
+## Infrastructure (local)
 
 ```bash
 docker compose up -d
 bash scripts/setup-local-config.sh --sync
 ```
 
-- MySQL: `localhost:3310` (host) → container `3306`, user/pass `mealbridge` / `mealbridge`
-- Redis: `localhost:6379` (`user-service` RT 저장용)
+| Service | Host | Notes |
+|---------|------|--------|
+| MySQL | `localhost:3310` | Maps to container `3306`; user/pass `mealbridge` / `mealbridge` |
+| Redis | `localhost:6379` | Refresh token store for `user-service` |
 
-### 서비스별 MySQL 스키마 (database)
+### MySQL databases (one instance, four schemas)
 
-| 서비스 | JDBC database |
-|--------|----------------|
+| Service | JDBC database |
+|---------|----------------|
 | `user-service` | `mealbridge_user` |
 | `donation-service` | `mealbridge_donation` |
 | `matching-service` | `mealbridge_matching` |
 | `ai-service` | `mealbridge_ai` |
 
-최초 기동 시 [`docker/mysql/init/01-schemas.sql`](docker/mysql/init/01-schemas.sql)가 4개 DB를 생성합니다.
+On first startup, [`docker/mysql/init/01-schemas.sql`](docker/mysql/init/01-schemas.sql) creates all four databases.
 
-**이미 예전 `mealbridge` 단일 DB로 컨테이너를 띄운 적이 있으면** init이 다시 안 돌아갑니다:
+If you previously ran an older single-database setup, re-run init:
 
 ```bash
 docker compose down -v
 docker compose up -d
 ```
 
-## 인증 (JWT + Gateway 헤더)
+## Build (per module)
 
-NylonMusk-BE 패턴: Gateway가 쿠키 `AT`를 검증하고 downstream에 **`X-User-Id`**, **`X-User-Role`** 헤더를 주입합니다.
+```bash
+cd eureka && ./gradlew build
+cd ../apigateway && ./gradlew build
+cd ../user-service && ./gradlew build
+# donation-service, matching-service, ai-service — same
+```
 
-| Role | 설명 |
-|------|------|
-| `ORGANIZATION` | 단체 (받는 쪽) |
-| `DONOR` | 잔식 제공 기관 (주는 쪽 — 군부대·학교·관공서 등 확장) |
-| `SUPER_ADMIN` | 총 관리자 (하위 `ADMIN` 계정 CRUD) |
-| `ADMIN` | 하위 관리자 |
+Windows: use `gradlew.bat build`.
 
-### API (Gateway 경유)
+## Run order (local)
 
-| Method | Path | 설명 |
-|--------|------|------|
-| POST | `/user-service/auth/login` | 로그인 → `AT`/`RT`/`CSRF-TOKEN` 쿠키 |
-| POST | `/user-service/auth/refresh` | AT 재발급 |
-| POST | `/user-service/auth/logout` | 로그아웃 |
-| GET | `/user-service/admin/users` | 하위 관리자 목록 (`SUPER_ADMIN`) |
-| POST | `/user-service/admin/users` | 하위 관리자 생성 (`SUPER_ADMIN`) |
+1. `docker compose up -d`
+2. `eureka` (8761)
+3. `user-service`, `donation-service`, `matching-service`, `ai-service`
+4. `apigateway` (8080)
 
-**FE 요청 시**
+Activate profile **`local`** in your IDE or:
 
-- `credentials: 'include'` (쿠키 전송)
-- POST/PUT/PATCH/DELETE: 헤더 `X-CSRF-Token` = 쿠키 `CSRF-TOKEN` 값
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
 
-### 시드 계정 (`mealbridge.auth.seed-enabled=true`)
+### Health checks (via gateway)
+
+- http://localhost:8080/user-service/health
+- http://localhost:8080/donation-service/health
+- http://localhost:8080/matching-service/health
+- http://localhost:8080/ai-service/health
+
+Frontend dev server (CORS allowed): http://127.0.0.1:3000
+
+## Authentication
+
+### Flow
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant GW as apigateway
+    participant US as user-service
+
+    FE->>GW: POST /user-service/auth/login
+    GW->>US: POST /auth/login
+    US-->>FE: Set-Cookie AT, RT, CSRF-TOKEN
+
+    FE->>GW: GET /user-service/organization/profile
+    GW->>GW: Validate AT cookie
+    GW->>US: X-User-Id, X-User-Role, X-User-Email
+    US-->>FE: 200 JSON
+```
+
+- **Access token (`AT`)** — HttpOnly cookie; validated at the gateway.
+- **Refresh token (`RT`)** — HttpOnly cookie; stored in Redis (in-memory fallback in `test` profile).
+- **CSRF** — double-submit: cookie `CSRF-TOKEN` + header `X-CSRF-Token` on mutating requests (gateway `CsrfFilter`).
+
+### Roles
+
+| Role | Description |
+|------|-------------|
+| `ORGANIZATION` | Receiving organization (e.g. welfare center) |
+| `DONOR` | Food donor institution (military unit, school, public office, etc.) |
+| `SUPER_ADMIN` | Top admin — CRUD for subordinate `ADMIN` accounts |
+| `ADMIN` | Sub-admin, created by `SUPER_ADMIN` |
+
+### Gateway API reference (prefix `/user-service`)
+
+| Method | Path | Access |
+|--------|------|--------|
+| POST | `/user-service/auth/login` | Public |
+| POST | `/user-service/auth/refresh` | Public (valid `RT` cookie) |
+| POST | `/user-service/auth/logout` | Authenticated |
+| GET | `/user-service/organization/profile` | `ORGANIZATION` |
+| GET | `/user-service/donor/profile` | `DONOR` |
+| GET | `/user-service/admin/users` | `SUPER_ADMIN` |
+| POST | `/user-service/admin/users` | `SUPER_ADMIN` |
+| PATCH | `/user-service/admin/users/{id}/status` | `SUPER_ADMIN` |
+| GET | `/user-service/admin/users/me` | `ADMIN` |
+| GET | `/donation-service/donations/me` | `DONOR` (sample; role checked in service) |
+
+### Frontend integration
+
+- Send cookies: `credentials: 'include'`
+- On POST/PUT/PATCH/DELETE: header `X-CSRF-Token` = cookie `CSRF-TOKEN` value
+- Do not set `X-User-Id` / `X-User-Role` from the client — the gateway sets them after JWT validation
+
+### Seed users (`mealbridge.auth.seed-enabled=true`, `local` profile)
 
 | Email | Role | Password |
 |-------|------|----------|
-| `super@mealbridge.local` | SUPER_ADMIN | `mealbridge123!` |
-| `admin@mealbridge.local` | ADMIN | `mealbridge123!` |
-| `org@mealbridge.local` | ORGANIZATION | `mealbridge123!` |
-| `donor@mealbridge.local` | DONOR | `mealbridge123!` |
+| `super@mealbridge.local` | `SUPER_ADMIN` | `mealbridge123!` |
+| `admin@mealbridge.local` | `ADMIN` | `mealbridge123!` |
+| `org@mealbridge.local` | `ORGANIZATION` | `mealbridge123!` |
+| `donor@mealbridge.local` | `DONOR` | `mealbridge123!` |
 
-## 브랜치
+## Postman
 
-- `develop` — MSA scaffold merge 완료
-- `feature/gateway-jwt-auth` — JWT 인증·RBAC
+Import:
 
-## 후속 작업
+- [`postman/MealBridge-Local.postman_collection.json`](postman/MealBridge-Local.postman_collection.json)
+- [`postman/MealBridge-Local.postman_environment.json`](postman/MealBridge-Local.postman_environment.json)
 
-- Kafka, OpenFeign 도메인 연동
-- 회원가입·승인 워크플로
-- donation/matching/ai 서비스 전면 헤더·Security 적용
+Details: [`postman/README.md`](postman/README.md).
+
+Suggested flow: **Health** → **Login** → role folders → negative tests.
+
+## Branching
+
+| Branch | Contents |
+|--------|----------|
+| `develop` | Integration branch — MSA scaffold + JWT/RBAC + Docker/Postman |
+| `feature/*` | Topic branches (merge into `develop` with `--no-ff` when you want a merge commit) |
+
+## Roadmap
+
+- [ ] Sign-up and approval workflow
+- [ ] Apply gateway header trust / security to all services consistently
+- [ ] OpenFeign + Kafka for cross-service domain events
+- [ ] Donation, matching, and AI domain entities and APIs
+- [ ] Frontend login and role-based routing
+
+## Related docs
+
+Project change logs (Korean) live in the parent repo: [`../dev-logs/`](../dev-logs/) — e.g. `2026-05-30-012-be-gateway-jwt-auth.md`, `2026-05-30-013-be-jwt-login-errors-fix.md`.
