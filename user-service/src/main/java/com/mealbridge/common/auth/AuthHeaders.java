@@ -38,6 +38,10 @@ public class AuthHeaders {
 		return loadActiveUser(userHeader, roleHeader, null).getId();
 	}
 
+	public User requireActiveActor(String userHeader, String roleHeader) {
+		return loadActiveUser(userHeader, roleHeader, null);
+	}
+
 	public UUID requireActiveSuperAdmin(String userHeader, String roleHeader) {
 		return loadActiveUser(userHeader, roleHeader, Role.SUPER_ADMIN).getId();
 	}
