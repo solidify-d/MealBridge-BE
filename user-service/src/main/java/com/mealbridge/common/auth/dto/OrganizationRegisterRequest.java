@@ -1,7 +1,7 @@
 package com.mealbridge.common.auth.dto;
 
-import com.mealbridge.domain.organization.OrganizationType;
-import com.mealbridge.domain.organization.TargetDemographic;
+import com.mealbridge.domain.organization.entity.OrganizationType;
+import com.mealbridge.domain.organization.entity.TargetDemographic;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,5 +1,6 @@
 package com.mealbridge.common.auth.filter;
 
+import com.mealbridge.common.apiResponse.GatewayErrorResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,11 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -130,15 +129,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 	}
 
 	private Mono<Void> writeJson(ServerWebExchange exchange, HttpStatus status, String message) {
-		byte[] body = String.format(
-				"{\"status_code\":%d,\"status_message\":\"%s\"}",
-				status.value(), message
-		).getBytes(StandardCharsets.UTF_8);
-
-		exchange.getResponse().setStatusCode(status);
-		exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-		DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(body);
-		return exchange.getResponse().writeWith(Mono.just(buffer));
+		return GatewayErrorResponse.write(exchange, status, message);
 	}
 
 	private boolean isWhitelisted(String path) {
