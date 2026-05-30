@@ -34,7 +34,7 @@ public class DonationServiceImpl implements DonationService {
 		}
 
 		Donation donation = Donation.builder()
-				.organizationId(request.organizationId())
+				.donorInstitutionId(request.donorInstitutionId())
 				.registeredByUserId(actorUserId)
 				.mealType(request.mealType())
 				.menuName(request.menuName().trim())
@@ -49,10 +49,10 @@ public class DonationServiceImpl implements DonationService {
 		try {
 			if (beforeImage != null && !beforeImage.isEmpty()) {
 				beforeUrl = donationImageStorage.upload(
-						donation.getOrganizationId(), donation.getId(), beforeImage);
+						donation.getDonorInstitutionId(), donation.getId(), beforeImage);
 			}
 			afterUrl = donationImageStorage.upload(
-					donation.getOrganizationId(), donation.getId(), afterImage);
+					donation.getDonorInstitutionId(), donation.getId(), afterImage);
 			donation.updateImages(beforeUrl, afterUrl);
 			return toDto(donation);
 		} catch (RuntimeException e) {
@@ -73,7 +73,7 @@ public class DonationServiceImpl implements DonationService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<DonationResDto> listAvailableForDonor() {
+	public List<DonationResDto> listAvailableForOrganization() {
 		return donationRepository.findByStatusOrderByCreatedAtDesc(DonationStatus.REGISTERED).stream()
 				.map(this::toDto)
 				.toList();
@@ -83,11 +83,11 @@ public class DonationServiceImpl implements DonationService {
 	@Transactional(readOnly = true)
 	public DonationResDto getById(UUID id, UUID actorUserId, String role) {
 		Donation donation = requireDonation(id);
-		if ("ORGANIZATION".equalsIgnoreCase(role)) {
+		if ("DONOR".equalsIgnoreCase(role)) {
 			if (!donation.getRegisteredByUserId().equals(actorUserId)) {
 				throw new SecurityException("Access denied");
 			}
-		} else if ("DONOR".equalsIgnoreCase(role)) {
+		} else if ("ORGANIZATION".equalsIgnoreCase(role)) {
 			if (donation.getStatus() != DonationStatus.REGISTERED) {
 				throw new SecurityException("Donation is not available");
 			}
@@ -117,7 +117,7 @@ public class DonationServiceImpl implements DonationService {
 	private DonationResDto toDto(Donation donation) {
 		return new DonationResDto(
 				donation.getId(),
-				donation.getOrganizationId(),
+				donation.getDonorInstitutionId(),
 				donation.getRegisteredByUserId(),
 				donation.getStatus(),
 				donation.getMealType(),

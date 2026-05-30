@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CreateDonationReq(
-		@NotNull UUID organizationId,
+		@NotNull UUID donorInstitutionId,
 		@NotNull MealType mealType,
 		@NotBlank String menuName,
 		LocalDateTime servingEndedAt,

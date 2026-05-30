@@ -24,8 +24,8 @@ import java.util.UUID;
 @SQLRestriction("deleted_at IS NULL")
 public class Donation extends BaseIdAndTimeEntity {
 
-	@Column(name = "organization_id", nullable = false)
-	private UUID organizationId;
+	@Column(name = "donor_institution_id", nullable = false)
+	private UUID donorInstitutionId;
 
 	@Column(name = "registered_by_user_id", nullable = false)
 	private UUID registeredByUserId;
@@ -58,7 +58,7 @@ public class Donation extends BaseIdAndTimeEntity {
 
 	@Builder
 	public Donation(
-			UUID organizationId,
+			UUID donorInstitutionId,
 			UUID registeredByUserId,
 			MealType mealType,
 			String menuName,
@@ -67,7 +67,7 @@ public class Donation extends BaseIdAndTimeEntity {
 			String beforeImageUrl,
 			String afterImageUrl,
 			String notes) {
-		this.organizationId = organizationId;
+		this.donorInstitutionId = donorInstitutionId;
 		this.registeredByUserId = registeredByUserId;
 		this.status = DonationStatus.REGISTERED;
 		this.mealType = mealType;

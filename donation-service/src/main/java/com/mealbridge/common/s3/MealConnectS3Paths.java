@@ -9,7 +9,7 @@ public final class MealConnectS3Paths {
 	private MealConnectS3Paths() {
 	}
 
-	public static String donation(UUID organizationId, UUID donationId) {
-		return String.format("%s/donations/%s/%s", ROOT, organizationId, donationId);
+	public static String donation(UUID donorInstitutionId, UUID donationId) {
+		return String.format("%s/donations/%s/%s", ROOT, donorInstitutionId, donationId);
 	}
 }

@@ -37,7 +37,7 @@ public class DonationController {
 			@RequestPart(value = "beforeImage", required = false) MultipartFile beforeImage,
 			@RequestPart("afterImage") MultipartFile afterImage) {
 
-		UUID actorId = authHeaders.requireOrganization(userId, role);
+		UUID actorId = authHeaders.requireDonor(userId, role);
 		DonationResDto created = donationService.create(actorId, request, beforeImage, afterImage);
 		return ApiResponse.created(created, "Donation registered");
 	}
@@ -47,7 +47,7 @@ public class DonationController {
 			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role) {
 
-		UUID actorId = authHeaders.requireOrganization(userId, role);
+		UUID actorId = authHeaders.requireDonor(userId, role);
 		List<DonationResDto> list = donationService.listMine(actorId);
 		return ApiResponse.ok(list, "Donations retrieved");
 	}
@@ -57,8 +57,8 @@ public class DonationController {
 			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role) {
 
-		authHeaders.requireDonor(userId, role);
-		List<DonationResDto> list = donationService.listAvailableForDonor();
+		authHeaders.requireOrganization(userId, role);
+		List<DonationResDto> list = donationService.listAvailableForOrganization();
 		return ApiResponse.ok(list, "Available donations retrieved");
 	}
 
@@ -83,7 +83,7 @@ public class DonationController {
 			@RequestHeader(value = "X-User-Id", required = false) String userId,
 			@RequestHeader(value = "X-User-Role", required = false) String role) {
 
-		UUID actorId = authHeaders.requireOrganization(userId, role);
+		UUID actorId = authHeaders.requireDonor(userId, role);
 		donationService.cancel(id, actorId);
 		return ApiResponse.ok(null, "Donation cancelled");
 	}
