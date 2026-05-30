@@ -1,0 +1,307 @@
+{
+  "info": {
+    "_postman_id": "mealbridge-local-collection",
+    "name": "MealBridge Local (Gateway)",
+    "description": "MealBridge API tests via API Gateway (port 8080).\n\n**Setup**\n1. Import this collection + `MealBridge-Local.postman_environment.json`\n2. Select environment **MealBridge Local**\n3. Start: Eureka → user-service → donation/matching/ai → apigateway\n4. `docker compose up -d` (MySQL :3310, Redis :6379)\n\n**Auth**\n- Run a **Auth / Login** request first (cookies `AT`, `RT`, `CSRF-TOKEN` are stored automatically).\n- Mutating requests (POST/PATCH) send `X-CSRF-Token` from the `CSRF-TOKEN` cookie via collection pre-request script.\n\n**Seed passwords:** see environment variable `password` (default `mealbridge123!`).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const method = pm.request.method;",
+          "const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);",
+          "const path = pm.request.url.getPath();",
+          "const authWhitelist = path.includes('/auth/');",
+          "if (needsCsrf && !authWhitelist) {",
+          "  const csrf = pm.cookies.get('CSRF-TOKEN');",
+          "  if (csrf) {",
+          "    pm.request.headers.upsert({ key: 'X-CSRF-Token', value: csrf });",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Health",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "User Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/health"
+          }
+        },
+        {
+          "name": "Donation Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/donation-service/health"
+          }
+        },
+        {
+          "name": "Matching Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/matching-service/health"
+          }
+        },
+        {
+          "name": "AI Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/ai-service/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Login — SUPER_ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Role SUPER_ADMIN', () => pm.expect(json.result.role).to.eql('SUPER_ADMIN'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{superEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/user-service/auth/login",
+            "description": "Body 탭에 JSON 필수. 성공 시 200 + Set-Cookie(AT, RT, CSRF-TOKEN)."
+          }
+        },
+        {
+          "name": "Login — ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/auth/login"
+          }
+        },
+        {
+          "name": "Login — ORGANIZATION",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{orgEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/auth/login"
+          }
+        },
+        {
+          "name": "Login — DONOR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{donorEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/auth/login"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Super Admin",
+      "description": "Run **Login — SUPER_ADMIN** first.",
+      "item": [
+        {
+          "name": "List Sub-Admins",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/users"
+          }
+        },
+        {
+          "name": "Create Sub-Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const id = pm.response.json().result.id;",
+                  "  pm.environment.set('newAdminId', id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"subadmin.test@mealbridge.local\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Test Sub Admin\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/admin/users"
+          }
+        },
+        {
+          "name": "Suspend Sub-Admin (by id)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUSPENDED\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/admin/users/{{newAdminId}}/status"
+          }
+        },
+        {
+          "name": "Admin Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/users/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Organization",
+      "description": "Run **Login — ORGANIZATION** first.",
+      "item": [
+        {
+          "name": "Organization Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/organization/profile"
+          }
+        },
+        {
+          "name": "Donation Me (as ORG — should work)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/donation-service/donations/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Donor",
+      "description": "Run **Login — DONOR** first.",
+      "item": [
+        {
+          "name": "Donor Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/donor/profile"
+          }
+        },
+        {
+          "name": "Donation Me (as DONOR — should work)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/donation-service/donations/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Negative (auth)",
+      "item": [
+        {
+          "name": "Protected without login — 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthorized', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/organization/profile"
+          }
+        },
+        {
+          "name": "ORG profile as DONOR — 403",
+          "description": "1) Login DONOR 2) Run this (wrong role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Forbidden', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/organization/profile"
+          }
+        }
+      ]
+    }
+  ]
+}

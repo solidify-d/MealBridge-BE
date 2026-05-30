@@ -67,12 +67,80 @@ Gateway 경유 health 예:
 
 FE dev server: http://127.0.0.1:3000 (Gateway CORS 허용)
 
+## Postman
+
+[`postman/MealBridge-Local.postman_collection.json`](postman/MealBridge-Local.postman_collection.json) + [`postman/MealBridge-Local.postman_environment.json`](postman/MealBridge-Local.postman_environment.json) — Gateway 경유 API 테스트 (로그인·역할별·CSRF). See [`postman/README.md`](postman/README.md).
+
+## 인프라 (로컬)
+
+```bash
+docker compose up -d
+bash scripts/setup-local-config.sh --sync
+```
+
+- MySQL: `localhost:3310` (host) → container `3306`, user/pass `mealbridge` / `mealbridge`
+- Redis: `localhost:6379` (`user-service` RT 저장용)
+
+### 서비스별 MySQL 스키마 (database)
+
+| 서비스 | JDBC database |
+|--------|----------------|
+| `user-service` | `mealbridge_user` |
+| `donation-service` | `mealbridge_donation` |
+| `matching-service` | `mealbridge_matching` |
+| `ai-service` | `mealbridge_ai` |
+
+최초 기동 시 [`docker/mysql/init/01-schemas.sql`](docker/mysql/init/01-schemas.sql)가 4개 DB를 생성합니다.
+
+**이미 예전 `mealbridge` 단일 DB로 컨테이너를 띄운 적이 있으면** init이 다시 안 돌아갑니다:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+## 인증 (JWT + Gateway 헤더)
+
+NylonMusk-BE 패턴: Gateway가 쿠키 `AT`를 검증하고 downstream에 **`X-User-Id`**, **`X-User-Role`** 헤더를 주입합니다.
+
+| Role | 설명 |
+|------|------|
+| `ORGANIZATION` | 단체 (받는 쪽) |
+| `DONOR` | 잔식 제공 기관 (주는 쪽 — 군부대·학교·관공서 등 확장) |
+| `SUPER_ADMIN` | 총 관리자 (하위 `ADMIN` 계정 CRUD) |
+| `ADMIN` | 하위 관리자 |
+
+### API (Gateway 경유)
+
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/user-service/auth/login` | 로그인 → `AT`/`RT`/`CSRF-TOKEN` 쿠키 |
+| POST | `/user-service/auth/refresh` | AT 재발급 |
+| POST | `/user-service/auth/logout` | 로그아웃 |
+| GET | `/user-service/admin/users` | 하위 관리자 목록 (`SUPER_ADMIN`) |
+| POST | `/user-service/admin/users` | 하위 관리자 생성 (`SUPER_ADMIN`) |
+
+**FE 요청 시**
+
+- `credentials: 'include'` (쿠키 전송)
+- POST/PUT/PATCH/DELETE: 헤더 `X-CSRF-Token` = 쿠키 `CSRF-TOKEN` 값
+
+### 시드 계정 (`mealbridge.auth.seed-enabled=true`)
+
+| Email | Role | Password |
+|-------|------|----------|
+| `super@mealbridge.local` | SUPER_ADMIN | `mealbridge123!` |
+| `admin@mealbridge.local` | ADMIN | `mealbridge123!` |
+| `org@mealbridge.local` | ORGANIZATION | `mealbridge123!` |
+| `donor@mealbridge.local` | DONOR | `mealbridge123!` |
+
 ## 브랜치
 
-- `feature/msa-scaffold` — MSA 빈 껍데기 초기 세팅
+- `develop` — MSA scaffold merge 완료
+- `feature/gateway-jwt-auth` — JWT 인증·RBAC
 
 ## 후속 작업
 
-- MySQL / Redis / Kafka 연동
-- OpenFeign, JWT, 도메인 API
-- Docker Compose
+- Kafka, OpenFeign 도메인 연동
+- 회원가입·승인 워크플로
+- donation/matching/ai 서비스 전면 헤더·Security 적용
