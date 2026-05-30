@@ -138,6 +138,46 @@
           }
         },
         {
+          "name": "Register — Organization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.environment.set('pendingUserId', json.result.userId);",
+                  "  pm.test('PENDING', () => pm.expect(json.result.status).to.eql('PENDING'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"neworg.test@mealbridge.local\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Org Contact\",\n  \"phone\": \"01011112222\",\n  \"organizationName\": \"Hope Center Test\",\n  \"organizationType\": \"WELFARE_CENTER\",\n  \"address\": \"Seoul Gangnam\",\n  \"organizationPhone\": \"0211112222\",\n  \"recipientCapacity\": 30,\n  \"targetDemographic\": \"ELDERLY\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/auth/register/organization"
+          }
+        },
+        {
+          "name": "Register — Donor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newdonor.test@mealbridge.local\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Donor Contact\",\n  \"phone\": \"01033334444\",\n  \"institutionName\": \"Demo School Test\",\n  \"institutionType\": \"SCHOOL\",\n  \"address\": \"Busan\",\n  \"institutionPhone\": \"0511112222\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/auth/register/donor"
+          }
+        },
+        {
           "name": "Refresh Token",
           "request": {
             "method": "POST",
@@ -159,6 +199,42 @@
       "name": "02 Super Admin",
       "description": "Run **Login — SUPER_ADMIN** first.",
       "item": [
+        {
+          "name": "List Pending Registrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations/pending"
+          }
+        },
+        {
+          "name": "Get Pending Registration Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations/{{pendingUserId}}"
+          }
+        },
+        {
+          "name": "Approve Registration",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/user-service/admin/registrations/{{pendingUserId}}/approve"
+          }
+        },
+        {
+          "name": "Reject Registration",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Incomplete documentation\"\n}"
+            },
+            "url": "{{baseUrl}}/user-service/admin/registrations/{{pendingUserId}}/reject"
+          }
+        },
         {
           "name": "List Sub-Admins",
           "request": {

@@ -21,9 +21,17 @@ Gateway: `http://localhost:8080` (`baseUrl` in environment)
 ## Recommended flow
 
 1. **00 Health** — Gateway + services UP 확인
-2. **01 Auth / Login — SUPER_ADMIN** (or role you need)
-3. Role-specific folder (02–04)
-4. **05 Negative** — 401/403 checks
+2. **01 Auth** — Register (optional) → **Login — SUPER_ADMIN** to approve → role login
+3. **02 Super Admin** — pending registrations / approve / sub-admin CRUD
+4. Role-specific folder (03–04)
+5. **05 Negative** — 401/403 checks
+
+### Signup → approval
+
+1. **Register — Organization** or **Register — Donor** (201, `PENDING`; saves `pendingUserId`)
+2. Try login as that user → should fail until approved
+3. **Login — SUPER_ADMIN** → **Approve Registration**
+4. Login as the new user → 200 + cookies
 
 ## CSRF
 

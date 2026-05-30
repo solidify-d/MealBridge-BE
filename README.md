@@ -11,6 +11,7 @@ Backend microservices for **MealBridge** — surplus food matching between organ
 | JWT auth (HttpOnly cookies), refresh tokens (Redis) | Done |
 | Gateway `JwtAuthFilter` + `CsrfFilter` | Done |
 | Four roles + RBAC in `user-service` | Done |
+| ORGANIZATION / DONOR signup + SUPER_ADMIN approval | Done |
 | Sample APIs (`organization`, `donor`, `admin`, `donations/me`) | Done |
 | Postman collection for local testing | Done |
 | Kafka, OpenFeign domain flows | Planned |
@@ -162,13 +163,33 @@ sequenceDiagram
 | `SUPER_ADMIN` | Top admin — CRUD for subordinate `ADMIN` accounts |
 | `ADMIN` | Sub-admin, created by `SUPER_ADMIN` |
 
+### Registration and approval
+
+1. **Public signup** — `POST /user-service/auth/register/organization` or `/auth/register/donor` → account `PENDING` (no cookies).
+2. **SUPER_ADMIN** lists `GET /user-service/admin/registrations/pending`, reviews detail, then `PATCH .../approve` or `.../reject`.
+3. After approval, user can **login** normally.
+
+**ADMIN accounts** are not self-registered; `SUPER_ADMIN` creates them via `POST /user-service/admin/users`.
+
+### Authorization (NylonMusk mkx-platform pattern)
+
+- **Gateway** validates JWT and injects `X-User-Id` / `X-User-Role`.
+- **`SecurityConfig`** only defines: public paths (`/auth/**`), coarse `/admin/**` (any admin role), and `authenticated` for everything else.
+- **Fine-grained roles** use method annotations (`@SuperAdminOnly`, `@AdminOnly`, `@OrganizationOnly`, `@DonorOnly`) + `UserAccessGuard` (active user check), similar to NylonMusk `@ExchangeOnly` + `AdminAccessGuard`.
+
 ### Gateway API reference (prefix `/user-service`)
 
 | Method | Path | Access |
 |--------|------|--------|
+| POST | `/user-service/auth/register/organization` | Public |
+| POST | `/user-service/auth/register/donor` | Public |
 | POST | `/user-service/auth/login` | Public |
 | POST | `/user-service/auth/refresh` | Public (valid `RT` cookie) |
 | POST | `/user-service/auth/logout` | Authenticated |
+| GET | `/user-service/admin/registrations/pending` | `SUPER_ADMIN` |
+| GET | `/user-service/admin/registrations/{userId}` | `SUPER_ADMIN` |
+| PATCH | `/user-service/admin/registrations/{userId}/approve` | `SUPER_ADMIN` |
+| PATCH | `/user-service/admin/registrations/{userId}/reject` | `SUPER_ADMIN` |
 | GET | `/user-service/organization/profile` | `ORGANIZATION` |
 | GET | `/user-service/donor/profile` | `DONOR` |
 | GET | `/user-service/admin/users` | `SUPER_ADMIN` |
@@ -212,7 +233,6 @@ Suggested flow: **Health** → **Login** → role folders → negative tests.
 
 ## Roadmap
 
-- [ ] Sign-up and approval workflow
 - [ ] Apply gateway header trust / security to all services consistently
 - [ ] OpenFeign + Kafka for cross-service domain events
 - [ ] Donation, matching, and AI domain entities and APIs
