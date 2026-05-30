@@ -33,6 +33,18 @@ Gateway: `http://localhost:8080` (`baseUrl` in environment)
 3. **Login — SUPER_ADMIN** → **Approve Registration**
 4. Login as the new user → 200 + cookies
 
+## Response JSON
+
+All APIs return NylonMusk community-style envelope:
+
+| Field | Example |
+|-------|---------|
+| `status_code` | `200`, `401`, `404` |
+| `status_message` | `"Login successful"` |
+| `result` | payload object or `null` |
+
+Tests use `json.result.*` (not `statusCode`).
+
 ## CSRF
 
 Collection **pre-request script** adds `X-CSRF-Token` from cookie `CSRF-TOKEN` on POST/PATCH/PUT/DELETE (except `/auth/**`).

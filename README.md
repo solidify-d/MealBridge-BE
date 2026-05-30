@@ -14,9 +14,26 @@ Backend microservices for **MealBridge** — surplus food matching between organ
 | ORGANIZATION / DONOR signup + SUPER_ADMIN approval | Done |
 | Sample APIs (`organization`, `donor`, `admin`, `donations/me`) | Done |
 | Postman collection for local testing | Done |
+| Community-style API envelope (`status_code`, `status_message`, `result`) | Done |
 | Kafka, OpenFeign domain flows | Planned |
 
 Architecture follows the **NylonMusk-BE** pattern: the **gateway validates JWT once** and downstream services trust **`X-User-Id`** / **`X-User-Role`** headers.
+
+## API response format (NylonMusk community style)
+
+All servlet services and gateway error responses use the same JSON envelope:
+
+```json
+{
+  "status_message": "Login successful",
+  "status_code": 200,
+  "result": { }
+}
+```
+
+- Success: `com.mealbridge.common.apiResponse.ApiResponse` (`ok`, `created`, …)
+- Errors: `CommonErrorDTO` via `CommonExceptionHandler` (services) or `GatewayErrorResponse` (gateway filters)
+- Field names are **snake_case** (`status_code`, not `statusCode`)
 
 ## Module layout
 
@@ -171,11 +188,13 @@ sequenceDiagram
 
 **ADMIN accounts** are not self-registered; `SUPER_ADMIN` creates them via `POST /user-service/admin/users`.
 
-### Authorization (NylonMusk mkx-platform pattern)
+### Authorization (NylonMusk community header pattern)
 
-- **Gateway** validates JWT and injects `X-User-Id` / `X-User-Role`.
-- **`SecurityConfig`** only defines: public paths (`/auth/**`), coarse `/admin/**` (any admin role), and `authenticated` for everything else.
-- **Fine-grained roles** use method annotations (`@SuperAdminOnly`, `@AdminOnly`, `@OrganizationOnly`, `@DonorOnly`) + `UserAccessGuard` (active user check), similar to NylonMusk `@ExchangeOnly` + `AdminAccessGuard`.
+- **API Gateway** validates JWT (cookies) and injects `X-User-Id` / `X-User-Role` on downstream requests.
+- **user-service** has no Spring Security filter chain. Protected controllers call `AuthHeaders` (same idea as NylonMusk community): missing or invalid headers → `SecurityException` → **403** with `CommonErrorDTO`.
+- **Role checks** are explicit per endpoint (`requireSuperAdmin`, `requireAdmin`, `requireOrganization`, `requireDonor`, `requireActiveUser`).
+- **donation-service** uses a lightweight `AuthHeaders` copy (no user DB); sample `GET /donations/me` requires `ORGANIZATION` or `DONOR`.
+- Direct calls to a service **without** going through the gateway skip JWT validation — rely on network policy in production.
 
 ### Gateway API reference (prefix `/user-service`)
 
@@ -240,4 +259,4 @@ Suggested flow: **Health** → **Login** → role folders → negative tests.
 
 ## Related docs
 
-Project change logs (Korean) live in the parent repo: [`../dev-logs/`](../dev-logs/) — e.g. `2026-05-30-012-be-gateway-jwt-auth.md`, `2026-05-30-013-be-jwt-login-errors-fix.md`.
+Project change logs (Korean) live in the parent repo: [`../dev-logs/`](../dev-logs/) — e.g. `2026-05-30-014-be-signup-approval.md`, `2026-05-30-017-be-api-response-community-style.md`.
