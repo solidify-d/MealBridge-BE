@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record DonationResDto(
 		UUID id,
-		UUID organizationId,
+		UUID donorInstitutionId,
 		UUID registeredByUserId,
 		DonationStatus status,
 		MealType mealType,

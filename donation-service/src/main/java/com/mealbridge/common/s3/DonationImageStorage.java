@@ -13,10 +13,10 @@ public class DonationImageStorage {
 
 	private final ObjectProvider<S3Manager> s3ManagerProvider;
 
-	public String upload(UUID organizationId, UUID donationId, MultipartFile file) {
+	public String upload(UUID donorInstitutionId, UUID donationId, MultipartFile file) {
 		S3Manager s3Manager = requireS3();
 		DonationImageValidator.validate(file);
-		String prefix = MealConnectS3Paths.donation(organizationId, donationId);
+		String prefix = MealConnectS3Paths.donation(donorInstitutionId, donationId);
 		return s3Manager.upload(file, prefix);
 	}
 
