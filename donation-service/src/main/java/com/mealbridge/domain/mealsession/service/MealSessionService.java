@@ -12,9 +12,17 @@ public interface MealSessionService {
 
 	MealSessionResDto getActive(UUID actorUserId, UUID donorInstitutionId);
 
+	MealSessionResDto lookupForDate(
+			UUID actorUserId,
+			UUID donorInstitutionId,
+			java.time.LocalDate sessionDate,
+			com.mealbridge.domain.donation.entity.MealType mealType);
+
 	MealSessionResDto getById(UUID actorUserId, UUID sessionId);
 
 	MealSessionResDto confirmEvent(UUID actorUserId, UUID sessionId, ConfirmTrackingEventReq request);
 
 	MealSessionResDto close(UUID actorUserId, UUID sessionId);
+
+	void cancelServing(UUID actorUserId, UUID sessionId);
 }

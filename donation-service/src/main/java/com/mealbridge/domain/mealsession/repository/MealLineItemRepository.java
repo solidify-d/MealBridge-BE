@@ -14,4 +14,6 @@ public interface MealLineItemRepository extends JpaRepository<MealLineItem, UUID
 	List<MealLineItem> findBySessionIdInOrderBySessionIdAscCreatedAtAsc(Collection<UUID> sessionIds);
 
 	void deleteBySessionId(UUID sessionId);
+
+	void deleteBySessionIdIn(Collection<UUID> sessionIds);
 }

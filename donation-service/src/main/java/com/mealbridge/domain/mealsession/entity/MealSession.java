@@ -54,6 +54,39 @@ public class MealSession extends BaseIdAndTimeEntity {
 	@Column(length = 1000)
 	private String notes;
 
+	@Column(name = "weather_latitude")
+	private Double weatherLatitude;
+
+	@Column(name = "weather_longitude")
+	private Double weatherLongitude;
+
+	@Column(name = "weather_temperature_c")
+	private Double weatherTemperatureC;
+
+	@Column(name = "weather_humidity_pct")
+	private Integer weatherHumidityPct;
+
+	@Column(name = "weather_precipitation_mm")
+	private Double weatherPrecipitationMm;
+
+	@Column(name = "weather_wind_speed_kmh")
+	private Double weatherWindSpeedKmh;
+
+	@Column(name = "weather_code")
+	private Integer weatherCode;
+
+	@Column(name = "weather_captured_at")
+	private java.time.LocalDateTime weatherCapturedAt;
+
+	@Column(name = "weather_snapshot_json", columnDefinition = "TEXT")
+	private String weatherSnapshotJson;
+
+	@Column(name = "expected_serving_end_at")
+	private java.time.LocalDateTime expectedServingEndAt;
+
+	@Column(name = "predicted_leftover_json", columnDefinition = "TEXT")
+	private String predictedLeftoverJson;
+
 	@Builder
 	public MealSession(
 			UUID donorInstitutionId,
@@ -96,5 +129,34 @@ public class MealSession extends BaseIdAndTimeEntity {
 
 	public void close() {
 		this.status = MealSessionStatus.CLOSED;
+	}
+
+	public void applyWeatherSnapshot(
+			Double latitude,
+			Double longitude,
+			Double temperatureC,
+			Integer humidityPct,
+			Double precipitationMm,
+			Double windSpeedKmh,
+			Integer weatherCode,
+			java.time.LocalDateTime capturedAt,
+			String snapshotJson) {
+		this.weatherLatitude = latitude;
+		this.weatherLongitude = longitude;
+		this.weatherTemperatureC = temperatureC;
+		this.weatherHumidityPct = humidityPct;
+		this.weatherPrecipitationMm = precipitationMm;
+		this.weatherWindSpeedKmh = windSpeedKmh;
+		this.weatherCode = weatherCode;
+		this.weatherCapturedAt = capturedAt;
+		this.weatherSnapshotJson = snapshotJson;
+	}
+
+	public void setExpectedServingEndAt(java.time.LocalDateTime expectedServingEndAt) {
+		this.expectedServingEndAt = expectedServingEndAt;
+	}
+
+	public void setPredictedLeftoverJson(String predictedLeftoverJson) {
+		this.predictedLeftoverJson = predictedLeftoverJson;
 	}
 }

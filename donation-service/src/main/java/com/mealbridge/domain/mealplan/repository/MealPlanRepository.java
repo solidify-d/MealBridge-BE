@@ -16,6 +16,12 @@ public interface MealPlanRepository extends JpaRepository<MealPlan, UUID> {
 			LocalDate from,
 			LocalDate to);
 
+	List<MealPlan> findByDonorInstitutionIdAndNotesStartingWith(UUID donorInstitutionId, String notesPrefix);
+
+	boolean existsByDonorInstitutionIdAndNotes(UUID donorInstitutionId, String notes);
+
+	void deleteByDonorInstitutionIdAndNotesStartingWith(UUID donorInstitutionId, String notesPrefix);
+
 	Optional<MealPlan> findByDonorInstitutionIdAndPlanDateAndMealType(
 			UUID donorInstitutionId,
 			LocalDate planDate,

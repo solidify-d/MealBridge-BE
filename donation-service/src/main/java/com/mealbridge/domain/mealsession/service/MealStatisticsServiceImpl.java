@@ -18,6 +18,8 @@ import com.mealbridge.domain.mealsession.entity.TrackingMode;
 import com.mealbridge.domain.mealsession.repository.MealLineItemRepository;
 import com.mealbridge.domain.mealsession.repository.MealSessionRepository;
 import com.mealbridge.domain.mealsession.repository.TrackingEventRepository;
+import com.mealbridge.domain.weather.dto.SessionWeatherResDto;
+import com.mealbridge.domain.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 	private final TrackingEventRepository trackingEventRepository;
 	private final MealSessionRepository mealSessionRepository;
 	private final MealLineItemRepository mealLineItemRepository;
+	private final WeatherService weatherService;
 
 	@Override
 	public MealStatisticsResDto mealStatistics(
@@ -191,11 +194,11 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 
 		return List.of(
 				builders.get(MealType.BREAKFAST).toSummary(
-						MealType.BREAKFAST, preparedByMeal, servingDaily, leftoverDaily),
+						MealType.BREAKFAST, preparedByMeal, servingDaily, leftoverDaily, weatherService),
 				builders.get(MealType.LUNCH).toSummary(
-						MealType.LUNCH, preparedByMeal, servingDaily, leftoverDaily),
+						MealType.LUNCH, preparedByMeal, servingDaily, leftoverDaily, weatherService),
 				builders.get(MealType.DINNER).toSummary(
-						MealType.DINNER, preparedByMeal, servingDaily, leftoverDaily));
+						MealType.DINNER, preparedByMeal, servingDaily, leftoverDaily, weatherService));
 	}
 
 	private static final class ItemAccumulator {
@@ -257,7 +260,7 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 			applySnapshotsToItems(items, displayNames, mode, snapshots, totalKg);
 		}
 
-		MealSessionBreakdown toBreakdown() {
+		MealSessionBreakdown toBreakdown(WeatherService weatherService) {
 			List<MealItemBreakdown> itemRows = items.entrySet().stream()
 					.map(e -> e.getValue().toBreakdown(displayNames.getOrDefault(e.getKey(), e.getKey())))
 					.sorted(Comparator.comparing(MealItemBreakdown::wastedKg).reversed()
@@ -279,7 +282,8 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 					prepared,
 					served,
 					wasted,
-					itemRows);
+					itemRows,
+					weatherService.toSessionWeatherDto(session));
 		}
 	}
 
@@ -327,7 +331,8 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 				MealType mealType,
 				EnumMap<MealType, BigDecimal> preparedByMeal,
 				List<MealTypeDailyPoint> servingDaily,
-				List<MealTypeDailyPoint> leftoverDaily) {
+				List<MealTypeDailyPoint> leftoverDaily,
+				WeatherService weatherService) {
 			BigDecimal prepared = preparedByMeal.getOrDefault(mealType, BigDecimal.ZERO);
 			BigDecimal served = sumDailyByMeal(servingDaily, mealType);
 			BigDecimal wasted = sumDailyByMeal(leftoverDaily, mealType);
@@ -343,7 +348,7 @@ public class MealStatisticsServiceImpl implements MealStatisticsService {
 							.thenComparing(MealItemBreakdown::itemName))
 					.toList();
 			List<MealSessionBreakdown> sessionRows = sessions.values().stream()
-					.map(SessionDetailBuilder::toBreakdown)
+					.map(builder -> builder.toBreakdown(weatherService))
 					.sorted(Comparator.comparing(MealSessionBreakdown::sessionDate).reversed())
 					.toList();
 			return new MealSlotSummary(

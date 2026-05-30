@@ -93,6 +93,16 @@ public class MealPlanServiceImpl implements MealPlanService {
 		return toDto(plan);
 	}
 
+	@Override
+	public void delete(UUID actorUserId, UUID donorInstitutionId, UUID planId) {
+		MealPlan plan = mealPlanRepository.findById(planId)
+				.orElseThrow(() -> new EntityNotFoundException("Meal plan not found"));
+		if (!plan.getDonorInstitutionId().equals(donorInstitutionId)) {
+			throw new SecurityException("Access denied");
+		}
+		mealPlanRepository.delete(plan);
+	}
+
 	private void validateLineItems(List<LineItemInput> items) {
 		if (items == null || items.isEmpty()) {
 			throw new IllegalArgumentException("At least one dish is required");

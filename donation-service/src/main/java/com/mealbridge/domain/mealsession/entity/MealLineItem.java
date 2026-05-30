@@ -33,6 +33,12 @@ public class MealLineItem extends BaseIdAndTimeEntity {
 	@Column(length = 500)
 	private String ingredients;
 
+	@Column(name = "nutrition_json", columnDefinition = "TEXT")
+	private String nutritionJson;
+
+	@Column(name = "allergens_json", columnDefinition = "TEXT")
+	private String allergensJson;
+
 	@Column(name = "per_person_kg", precision = 12, scale = 3)
 	private BigDecimal perPersonKg;
 
@@ -42,13 +48,17 @@ public class MealLineItem extends BaseIdAndTimeEntity {
 			String itemName,
 			BigDecimal preparedKg,
 			BigDecimal perPersonKg,
-			String ingredients) {
+			String ingredients,
+			String nutritionJson,
+			String allergensJson) {
 		this.sessionId = sessionId;
 		this.itemName = itemName.trim();
 		this.preparedKg = preparedKg;
 		this.remainingKg = preparedKg;
 		this.perPersonKg = perPersonKg;
 		this.ingredients = ingredients;
+		this.nutritionJson = nutritionJson;
+		this.allergensJson = allergensJson;
 	}
 
 	public void setRemainingKg(BigDecimal remainingKg) {

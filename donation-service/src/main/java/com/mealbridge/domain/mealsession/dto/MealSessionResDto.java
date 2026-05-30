@@ -2,6 +2,8 @@ package com.mealbridge.domain.mealsession.dto;
 
 import com.mealbridge.domain.donation.entity.MealType;
 import com.mealbridge.domain.mealsession.entity.MealSessionStatus;
+import com.mealbridge.domain.prediction.dto.PredictedLeftoverResDto;
+import com.mealbridge.domain.weather.dto.SessionWeatherResDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +24,9 @@ public record MealSessionResDto(
 		String notes,
 		List<MealLineItemResDto> lineItems,
 		List<TrackingEventResDto> recentEvents,
+		SessionWeatherResDto weather,
+		PredictedLeftoverResDto predictedLeftover,
+		LocalDateTime expectedServingEndAt,
 		LocalDateTime createdAt,
 		LocalDateTime updatedAt
 ) {

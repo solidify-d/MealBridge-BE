@@ -10,7 +10,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,6 +27,9 @@ import java.util.UUID;
 @RequestMapping("/meal-plans")
 @RequiredArgsConstructor
 public class MealPlanController {
+
+	private static final String PLAN_ID =
+			"{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}";
 
 	private final AuthHeaders authHeaders;
 	private final MealPlanService mealPlanService;
@@ -71,5 +76,16 @@ public class MealPlanController {
 			@Valid @RequestBody BulkMealPlanReq request) {
 		UUID actorId = authHeaders.requireDonor(userId, role);
 		return ApiResponse.created(mealPlanService.bulkUpsert(actorId, request), "Meal plans imported");
+	}
+
+	@DeleteMapping("/" + PLAN_ID)
+	public ResponseEntity<?> delete(
+			@PathVariable UUID id,
+			@RequestHeader(value = "X-User-Id", required = false) String userId,
+			@RequestHeader(value = "X-User-Role", required = false) String role,
+			@RequestParam UUID donorInstitutionId) {
+		UUID actorId = authHeaders.requireDonor(userId, role);
+		mealPlanService.delete(actorId, donorInstitutionId, id);
+		return ApiResponse.ok(null, "Meal plan deleted");
 	}
 }

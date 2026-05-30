@@ -21,4 +21,14 @@ public interface MealSessionRepository extends JpaRepository<MealSession, UUID> 
 			UUID donorInstitutionId,
 			LocalDate from,
 			LocalDate to);
+
+	Optional<MealSession> findFirstByDonorInstitutionIdAndRegisteredByUserIdAndSessionDateAndMealTypeOrderByCreatedAtDesc(
+			UUID donorInstitutionId,
+			UUID registeredByUserId,
+			LocalDate sessionDate,
+			com.mealbridge.domain.donation.entity.MealType mealType);
+
+	List<MealSession> findByDonorInstitutionIdAndNotesStartingWith(UUID donorInstitutionId, String notesPrefix);
+
+	List<MealSession> findByStatus(MealSessionStatus status);
 }

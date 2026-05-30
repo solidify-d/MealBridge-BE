@@ -1,5 +1,7 @@
 package com.mealbridge.domain.mealsession.dto;
 
+import com.mealbridge.domain.weather.dto.SessionWeatherResDto;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,6 +13,7 @@ public record MealSessionBreakdown(
 		BigDecimal preparedKg,
 		BigDecimal servedKg,
 		BigDecimal wastedKg,
-		List<MealItemBreakdown> items
+		List<MealItemBreakdown> items,
+		SessionWeatherResDto weather
 ) {
 }

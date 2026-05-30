@@ -8,12 +8,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 public interface TrackingEventRepository extends JpaRepository<TrackingEvent, UUID> {
 
 	List<TrackingEvent> findTop20BySessionIdOrderByCreatedAtDesc(UUID sessionId);
+
+	List<TrackingEvent> findBySessionIdOrderByCreatedAtAsc(UUID sessionId);
+
+	List<TrackingEvent> findBySessionIdAndMode(UUID sessionId, TrackingMode mode);
 
 	@Query("""
 			SELECT e FROM TrackingEvent e, MealSession s
@@ -42,4 +47,6 @@ public interface TrackingEventRepository extends JpaRepository<TrackingEvent, UU
 			@Param("donorInstitutionId") UUID donorInstitutionId,
 			@Param("from") LocalDate from,
 			@Param("to") LocalDate to);
+
+	void deleteBySessionIdIn(Collection<UUID> sessionIds);
 }

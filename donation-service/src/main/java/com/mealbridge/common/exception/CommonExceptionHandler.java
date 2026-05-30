@@ -47,7 +47,11 @@ public class CommonExceptionHandler {
 
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<?> handleEntityNotFound(EntityNotFoundException e) {
-		log.error("[EntityNotFoundException] {}", e.getMessage());
+		if ("No active meal session".equals(e.getMessage())) {
+			log.debug("[EntityNotFoundException] {}", e.getMessage());
+		} else {
+			log.error("[EntityNotFoundException] {}", e.getMessage());
+		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.body(CommonErrorDTO.builder()
 						.status_message(e.getMessage())

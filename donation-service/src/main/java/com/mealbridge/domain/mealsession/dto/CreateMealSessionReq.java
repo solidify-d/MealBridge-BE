@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public record CreateMealSessionReq(
 		@NotNull @Min(1) Integer headcount,
 		String notes,
 		@NotEmpty @Valid List<LineItemInput> lineItems,
-		UUID mealPlanId
+		UUID mealPlanId,
+		LocalDateTime expectedServingEndAt
 ) {
 }

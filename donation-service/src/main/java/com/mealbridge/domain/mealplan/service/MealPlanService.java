@@ -17,4 +17,6 @@ public interface MealPlanService {
 	List<MealPlanResDto> bulkUpsert(UUID actorUserId, BulkMealPlanReq request);
 
 	MealPlanResDto getForDate(UUID actorUserId, UUID donorInstitutionId, LocalDate planDate, com.mealbridge.domain.donation.entity.MealType mealType);
+
+	void delete(UUID actorUserId, UUID donorInstitutionId, UUID planId);
 }

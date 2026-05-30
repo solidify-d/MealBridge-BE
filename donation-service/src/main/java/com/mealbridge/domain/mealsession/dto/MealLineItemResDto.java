@@ -9,6 +9,8 @@ public record MealLineItemResDto(
 		BigDecimal preparedKg,
 		BigDecimal perPersonKg,
 		BigDecimal remainingKg,
-		String ingredients
+		String ingredients,
+		String nutritionJson,
+		String allergensJson
 ) {
 }

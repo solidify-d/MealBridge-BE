@@ -2,6 +2,7 @@ package com.mealbridge.domain.mealsession.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mealbridge.common.util.JsonUtil;
+import com.mealbridge.common.util.KstDates;
 import com.mealbridge.domain.mealsession.dto.ConfirmTrackingEventReq;
 import com.mealbridge.domain.mealsession.dto.CreateMealSessionReq;
 import com.mealbridge.domain.mealsession.dto.LineItemInput;
@@ -20,6 +21,10 @@ import com.mealbridge.domain.mealsession.support.TrackingEventValidation;
 import com.mealbridge.domain.mealsession.repository.MealLineItemRepository;
 import com.mealbridge.domain.mealsession.repository.MealSessionRepository;
 import com.mealbridge.domain.mealsession.repository.TrackingEventRepository;
+import com.mealbridge.domain.analytics.service.MealAnalyticsAggregator;
+import com.mealbridge.domain.esg.service.EsgAggregationService;
+import com.mealbridge.domain.prediction.service.LeftoverPredictionService;
+import com.mealbridge.domain.weather.service.WeatherService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +51,10 @@ public class MealSessionServiceImpl implements MealSessionService {
 	private final MealLineItemRepository mealLineItemRepository;
 	private final TrackingEventRepository trackingEventRepository;
 	private final MealPlanRepository mealPlanRepository;
+	private final WeatherService weatherService;
+	private final EsgAggregationService esgAggregationService;
+	private final MealAnalyticsAggregator mealAnalyticsAggregator;
+	private final LeftoverPredictionService leftoverPredictionService;
 
 	@Override
 	public MealSessionResDto create(UUID actorUserId, CreateMealSessionReq request) {
@@ -56,8 +65,8 @@ public class MealSessionServiceImpl implements MealSessionService {
 					throw new IllegalStateException("An active meal session already exists. Close it before starting a new one.");
 				});
 
-		LocalDate sessionDate = request.sessionDate() != null ? request.sessionDate() : LocalDate.now();
-		if (sessionDate.isAfter(LocalDate.now())) {
+		LocalDate sessionDate = request.sessionDate() != null ? request.sessionDate() : KstDates.today();
+		if (sessionDate.isAfter(KstDates.today())) {
 			throw new IllegalArgumentException("Cannot start a live session for a future date");
 		}
 		List<LineItemInput> lineItems = resolveLineItems(request);
@@ -80,8 +89,37 @@ public class MealSessionServiceImpl implements MealSessionService {
 		mealSessionRepository.save(session);
 
 		saveLineItems(session.getId(), lineItems);
+		weatherService.attachWeatherSnapshot(session);
+		if (request.expectedServingEndAt() != null) {
+			session.setExpectedServingEndAt(request.expectedServingEndAt());
+		}
+		leftoverPredictionService.attachPrediction(session, lineItems);
+		syncMealPlanFromSession(actorUserId, session, lineItems);
 		session.transitionTo(MealSessionStatus.SERVING);
 		return toDto(session, true);
+	}
+
+	private void syncMealPlanFromSession(UUID actorUserId, MealSession session, List<LineItemInput> lineItems) {
+		String json = JsonUtil.toJson(lineItems);
+		mealPlanRepository
+				.findByDonorInstitutionIdAndPlanDateAndMealType(
+						session.getDonorInstitutionId(), session.getSessionDate(), session.getMealType())
+				.ifPresentOrElse(
+						plan -> plan.updateContents(
+								session.getPreparedWeightKg(),
+								session.getHeadcount(),
+								json,
+								plan.getNotes()),
+						() -> mealPlanRepository.save(MealPlan.builder()
+								.donorInstitutionId(session.getDonorInstitutionId())
+								.registeredByUserId(actorUserId)
+								.mealType(session.getMealType())
+								.planDate(session.getSessionDate())
+								.preparedWeightKg(session.getPreparedWeightKg())
+								.headcount(session.getHeadcount())
+								.lineItemsJson(json)
+								.notes(session.getNotes())
+								.build()));
 	}
 
 	@Override
@@ -91,6 +129,20 @@ public class MealSessionServiceImpl implements MealSessionService {
 				.findFirstByDonorInstitutionIdAndRegisteredByUserIdAndStatusInOrderByCreatedAtDesc(
 						donorInstitutionId, actorUserId, ACTIVE_STATUSES)
 				.orElseThrow(() -> new EntityNotFoundException("No active meal session"));
+		return toDto(session, true);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public MealSessionResDto lookupForDate(
+			UUID actorUserId,
+			UUID donorInstitutionId,
+			LocalDate sessionDate,
+			com.mealbridge.domain.donation.entity.MealType mealType) {
+		MealSession session = mealSessionRepository
+				.findFirstByDonorInstitutionIdAndRegisteredByUserIdAndSessionDateAndMealTypeOrderByCreatedAtDesc(
+						donorInstitutionId, actorUserId, sessionDate, mealType)
+				.orElseThrow(() -> new EntityNotFoundException("No meal session for this date and meal"));
 		return toDto(session, true);
 	}
 
@@ -146,7 +198,17 @@ public class MealSessionServiceImpl implements MealSessionService {
 	public MealSessionResDto close(UUID actorUserId, UUID sessionId) {
 		MealSession session = requireOwnedSession(actorUserId, sessionId);
 		session.close();
+		mealAnalyticsAggregator.upsertFromSession(session);
+		esgAggregationService.recordWasteReducedOnSessionClose(session);
 		return toDto(session, true);
+	}
+
+	@Override
+	public void cancelServing(UUID actorUserId, UUID sessionId) {
+		MealSession session = requireOwnedSession(actorUserId, sessionId);
+		trackingEventRepository.deleteBySessionIdIn(List.of(session.getId()));
+		mealLineItemRepository.deleteBySessionId(session.getId());
+		mealSessionRepository.delete(session);
 	}
 
 	private List<LineItemInput> resolveLineItems(CreateMealSessionReq request) {
@@ -205,6 +267,8 @@ public class MealSessionServiceImpl implements MealSessionService {
 					.preparedKg(input.preparedKg())
 					.perPersonKg(input.perPersonKg())
 					.ingredients(input.ingredients())
+					.nutritionJson(input.nutritionJson())
+					.allergensJson(input.allergensJson())
 					.build());
 		}
 	}
@@ -253,7 +317,9 @@ public class MealSessionServiceImpl implements MealSessionService {
 							item.getPreparedKg(),
 							item.getPerPersonKg(),
 							item.getRemainingKg(),
-							item.getIngredients()))
+							item.getIngredients(),
+							item.getNutritionJson(),
+							item.getAllergensJson()))
 					.toList();
 			events = trackingEventRepository.findTop20BySessionIdOrderByCreatedAtDesc(session.getId()).stream()
 					.map(this::toEventDto)
@@ -272,6 +338,9 @@ public class MealSessionServiceImpl implements MealSessionService {
 				session.getNotes(),
 				lineItems,
 				events,
+				weatherService.toSessionWeatherDto(session),
+				leftoverPredictionService.readFromSession(session),
+				session.getExpectedServingEndAt(),
 				session.getCreatedAt(),
 				session.getUpdatedAt());
 	}
