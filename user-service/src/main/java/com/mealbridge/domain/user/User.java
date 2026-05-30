@@ -12,7 +12,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -34,6 +36,15 @@ public class User {
 	@Column(nullable = false, length = 100)
 	private String name;
 
+	@Column(nullable = false, length = 32)
+	private String phone;
+
+	@Column(length = 64)
+	private String department;
+
+	@Column(length = 500)
+	private String memo;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 32)
 	private Role role;
@@ -51,12 +62,19 @@ public class User {
 	@Column(name = "created_by_id")
 	private UUID createdById;
 
+	@CreationTimestamp
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private Instant createdAt;
+
 	@Builder
-	public User(String email, String password, String name, Role role, UserStatus status,
-			UUID organizationId, UUID donorInstitutionId, UUID createdById) {
+	public User(String email, String password, String name, String phone, String department, String memo,
+			Role role, UserStatus status, UUID organizationId, UUID donorInstitutionId, UUID createdById) {
 		this.email = email;
 		this.password = password;
 		this.name = name;
+		this.phone = phone;
+		this.department = department;
+		this.memo = memo;
 		this.role = role;
 		this.status = status;
 		this.organizationId = organizationId;
@@ -66,5 +84,9 @@ public class User {
 
 	public void updateStatus(UserStatus status) {
 		this.status = status;
+	}
+
+	public void updateMemo(String memo) {
+		this.memo = memo;
 	}
 }
