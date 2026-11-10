@@ -15,8 +15,12 @@ spring:
       on-profile: local
   application:
     name: ai-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
   datasource:
-    url: jdbc:mysql://localhost:3310/mealbridge_ai?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/mealbridge_ai?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: mealbridge
     password: mealbridge
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -27,3 +31,32 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+# Copy access-key / secret-key from user-service application-local.yml
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+
+mealbridge:
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+    internal-auth:
+      enabled: true
+  ai:
+    # false = real Bedrock Nova Lite (IAM: bedrock:InvokeModel, model access enabled in console)
+    mock: ${AI_MOCK:false}
+    bedrock:
+      region: ${AWS_REGION:ap-northeast-2}
+      # ap-northeast-2 / Tokyo / Seoul: apac.amazon.nova-lite-v1:0 | US: us.amazon.nova-lite-v1:0
+      model-id: ${BEDROCK_VISION_MODEL:apac.amazon.nova-lite-v1:0}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      # true or empty api-key = mock Korean nutrition data (no OpenAI billing)
+      mock: ${OPENAI_MOCK:true}
+    rag:
+      # Relative to ai-service working dir: ../docs/rag → MealBridge-BE/docs/rag
+      docs-path: ${RAG_DOCS_PATH:../docs/rag}

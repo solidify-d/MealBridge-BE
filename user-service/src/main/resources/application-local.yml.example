@@ -13,10 +13,14 @@ spring:
   config:
     activate:
       on-profile: local
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
   application:
     name: user-service
   datasource:
-    url: jdbc:mysql://localhost:3310/mealbridge_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/mealbridge_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: mealbridge
     password: mealbridge
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,9 +35,20 @@ spring:
     redis:
       host: localhost
       port: 6379
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME:your-gmail@gmail.com}
+    password: ${GMAIL_APP_PASSWORD:your-gmail-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 jwt:
-  expirationAt: 604800000
+  expirationAt: 3600000
   expirationRt: 1209600000
   secretKeyAt: ${JWT_SECRET_AT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtYWNjZXNzLXNpZ25pbmcta2V5LTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==}
   secretKeyRt: ${JWT_SECRET_RT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtcmVmcmVzaC1zaWduaW5nLWtleS05OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQ==}
@@ -56,6 +71,45 @@ auth:
       same-site: Lax
       path: /
 
+# Redis: profileimg:{userId} → profile image URL (TTL: mealbridge.profile-image.cache-ttl-days)
+
+# IAM 예시 (버킷명에 맞게 수정):
+#   "Action": ["s3:PutObject","s3:DeleteObject","s3:GetObject"],
+#   "Resource": ["arn:aws:s3:::YOUR-BUCKET/MealConnect/*"]
+#
+# S3 layout (under bucket root):
+#   MealConnect/profiles/organization/{userId}/{uuid}-{filename}
+#   MealConnect/profiles/donor/{userId}/{uuid}-{filename}
+#   MealConnect/profiles/admin/{userId}/{uuid}-{filename}
+cloud:
+  aws:
+    credentials:
+      access-key: ${S3_ACCESS_KEY:your-aws-access-key}
+      secret-key: ${S3_SECRET_KEY:your-aws-secret-key}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+    s3:
+      enabled: ${S3_ENABLED:false}
+      bucket: ${AWS_S3_BUCKET:your-s3-bucket-name}
+
 mealbridge:
+  profile-image:
+    cache-ttl-days: 7
+  support:
+    contact-email: ${SUPPORT_CONTACT_EMAIL:support@mealbridge.local}
+  email-verification:
+    enabled: true
+    code-length: 6
+    code-ttl-minutes: 10
+    verified-ttl-minutes: 30
+    resend-cooldown-seconds: 60
+    from-address: ${GMAIL_USERNAME:your-gmail@gmail.com}
+    from-name: ConnectMeal
+    # Local-only: set to a fixed code and check server logs if Gmail is not configured yet
+    dev-fixed-code: ${EMAIL_VERIFICATION_DEV_CODE:}
   auth:
     seed-enabled: true
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+    internal-auth:
+      enabled: true

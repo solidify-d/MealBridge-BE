@@ -1,30 +1,37 @@
 package com.mealbridge.common.auth.controller;
 
-import com.mealbridge.common.api.ApiResponse;
+import com.mealbridge.common.apiResponse.ApiResponse;
 import com.mealbridge.common.auth.dto.DonorRegisterRequest;
+import com.mealbridge.common.auth.dto.EmailAvailabilityResponse;
 import com.mealbridge.common.auth.dto.LoginRequest;
 import com.mealbridge.common.auth.dto.LoginResponse;
 import com.mealbridge.common.auth.dto.OrganizationRegisterRequest;
+import com.mealbridge.common.auth.dto.SuspendedAccountInfo;
+import com.mealbridge.common.auth.email.EmailVerificationService;
 import com.mealbridge.common.auth.repository.RefreshTokenStore;
 import com.mealbridge.common.auth.service.AuthCookieService;
 import com.mealbridge.common.auth.service.JwtService;
 import com.mealbridge.common.auth.service.RegistrationService;
-import com.mealbridge.domain.user.User;
-import com.mealbridge.domain.user.UserRepository;
-import com.mealbridge.domain.user.UserStatus;
+import com.mealbridge.common.config.SupportProperties;
+import com.mealbridge.common.exception.AccountSuspendedException;
+import com.mealbridge.common.exception.UnauthorizedException;
+import com.mealbridge.domain.user.entity.User;
+import com.mealbridge.domain.user.entity.UserStatus;
+import com.mealbridge.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -40,40 +47,49 @@ public class AuthController {
 	private final RefreshTokenStore refreshTokenStore;
 	private final AuthCookieService authCookieService;
 	private final RegistrationService registrationService;
+	private final EmailVerificationService emailVerificationService;
+	private final SupportProperties supportProperties;
+
+	@GetMapping("/email/availability")
+	public ResponseEntity<?> checkEmailAvailability(@RequestParam("email") String email) {
+		EmailAvailabilityResponse body = emailVerificationService.checkAvailability(email);
+		return ApiResponse.ok(body);
+	}
 
 	@PostMapping("/register/organization")
 	public ResponseEntity<?> registerOrganization(@Valid @RequestBody OrganizationRegisterRequest request) {
 		var body = registrationService.registerOrganization(request);
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(new com.mealbridge.common.api.ApiResponseBody<>(
-						HttpStatus.CREATED.value(),
-						body.message(),
-						body
-				));
+		return ApiResponse.created(body, body.message());
 	}
 
 	@PostMapping("/register/donor")
 	public ResponseEntity<?> registerDonor(@Valid @RequestBody DonorRegisterRequest request) {
 		var body = registrationService.registerDonor(request);
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(new com.mealbridge.common.api.ApiResponseBody<>(
-						HttpStatus.CREATED.value(),
-						body.message(),
-						body
-				));
+		return ApiResponse.created(body, body.message());
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
 		User user = userRepository.findByEmail(request.email())
-				.orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
-
-		if (user.getStatus() != UserStatus.ACTIVE) {
-			throw new BadCredentialsException("Account is not active");
-		}
+				.orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
 		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-			throw new BadCredentialsException("Invalid email or password");
+			throw new UnauthorizedException("Invalid email or password");
+		}
+
+		if (user.getStatus() == UserStatus.SUSPENDED) {
+			String reason = user.getSuspendReason() != null && !user.getSuspendReason().isBlank()
+					? user.getSuspendReason()
+					: "Your account has been suspended. Please contact support for assistance.";
+			String contactEmail = supportProperties.contactEmail();
+			if (contactEmail == null || contactEmail.isBlank()) {
+				contactEmail = "support@mealbridge.local";
+			}
+			throw new AccountSuspendedException(new SuspendedAccountInfo(reason, contactEmail));
+		}
+
+		if (user.getStatus() != UserStatus.ACTIVE) {
+			throw new UnauthorizedException("Account is not active");
 		}
 
 		String role = user.getRole().name();
@@ -93,33 +109,33 @@ public class AuthController {
 	@PostMapping("/refresh")
 	public ResponseEntity<?> refresh(@CookieValue(value = "RT", required = false) String rt, HttpServletResponse response) {
 		if (rt == null) {
-			throw new BadCredentialsException("Refresh token missing");
+			throw new UnauthorizedException("Refresh token missing");
 		}
 
 		Claims rtClaims;
 		try {
 			rtClaims = jwtService.parseRefreshToken(rt);
 		} catch (JwtException e) {
-			throw new BadCredentialsException("Invalid refresh token");
+			throw new UnauthorizedException("Invalid refresh token");
 		}
 
 		UUID userId = UUID.fromString(rtClaims.getSubject());
 		String oldJti = rtClaims.getId();
 
 		if (refreshTokenStore.isRevoked(oldJti)) {
-			throw new BadCredentialsException("Refresh token already used");
+			throw new UnauthorizedException("Refresh token already used");
 		}
 
 		String savedRt = refreshTokenStore.getRefreshToken(userId);
 		if (savedRt == null || !savedRt.equals(rt)) {
-			throw new BadCredentialsException("Refresh token mismatch");
+			throw new UnauthorizedException("Refresh token mismatch");
 		}
 
 		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new BadCredentialsException("User not found"));
+				.orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		if (user.getStatus() != UserStatus.ACTIVE) {
-			throw new BadCredentialsException("Account is not active");
+			throw new UnauthorizedException("Account is not active");
 		}
 
 		String role = user.getRole().name();

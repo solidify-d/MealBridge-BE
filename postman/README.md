@@ -33,11 +33,35 @@ Gateway: `http://localhost:8080` (`baseUrl` in environment)
 3. **Login — SUPER_ADMIN** → **Approve Registration**
 4. Login as the new user → 200 + cookies
 
+## Response JSON
+
+All APIs return NylonMusk community-style envelope:
+
+| Field | Example |
+|-------|---------|
+| `status_code` | `200`, `401`, `404` |
+| `status_message` | `"Login successful"` |
+| `result` | payload object or `null` |
+
+Tests use `json.result.*` (not `statusCode`).
+
 ## CSRF
 
-Collection **pre-request script** adds `X-CSRF-Token` from cookie `CSRF-TOKEN` on POST/PATCH/PUT/DELETE (except `/auth/**`).
+Collection **pre-request script** adds `X-CSRF-Token` on POST/PATCH/PUT/DELETE (except `/auth/**`).
 
-If CSRF 403: login again to refresh `CSRF-TOKEN` cookie.
+Resolution order: env `csrfToken` → cookie `CSRF-TOKEN` at `baseUrl` → cookie fallback. **Login — SUPER_ADMIN** saves `csrfToken` to the environment.
+
+| Symptom | Cause |
+|---------|--------|
+| `403 Invalid CSRF token` on PATCH | No login, or `X-CSRF-Token` header missing / mismatched cookie |
+| `400 Invalid userId` | CSRF passed; path UUID is malformed (`not-a-uuid`) |
+| `405 Method Not Allowed` | CSRF passed; empty `pendingUserId` → URL `/registrations/approve` (no handler) |
+
+**Approve Registration** throws in pre-request if `pendingUserId` is empty — run **Register — Organization** or set env manually.
+
+Negative checks: folder **06 Negative (CSRF & path)**.
+
+If CSRF 403 persists: login again, re-import collection/environment, check Postman Cookies for `localhost`.
 
 ## Seed accounts
 

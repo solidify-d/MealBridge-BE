@@ -16,7 +16,7 @@ spring:
   application:
     name: matching-service
   datasource:
-    url: jdbc:mysql://localhost:3310/mealbridge_matching?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/mealbridge_matching?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: mealbridge
     password: mealbridge
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -27,3 +27,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+mealbridge:
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+    internal-auth:
+      enabled: true
+  notifications:
+    redis:
+      enabled: true
+      channel: mealbridge:notifications:sse

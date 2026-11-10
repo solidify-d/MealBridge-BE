@@ -54,5 +54,14 @@ spring:
             - StripPrefix=1
           uri: lb://ai-service
 
+# Production: set JWT_SECRET_AT and GATEWAY_INTERNAL_SECRET (no defaults).
 jwt:
   secretKeyAt: ${JWT_SECRET_AT:bWVhbGJyaWRnZS1sb2NhbC1qd3QtYWNjZXNzLXNpZ25pbmcta2V5LTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==}
+
+mealbridge:
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:mealbridge-local-gateway-secret}
+  security:
+    auth-rate-limit:
+      max-requests: 30
+      window-ms: 60000

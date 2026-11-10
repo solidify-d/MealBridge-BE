@@ -1,12 +1,12 @@
 package com.mealbridge;
 
-import com.mealbridge.domain.organization.OrganizationRepository;
-import com.mealbridge.domain.organization.OrganizationType;
-import com.mealbridge.domain.organization.TargetDemographic;
-import com.mealbridge.domain.user.Role;
-import com.mealbridge.domain.user.User;
-import com.mealbridge.domain.user.UserRepository;
-import com.mealbridge.domain.user.UserStatus;
+import com.mealbridge.domain.organization.entity.OrganizationType;
+import com.mealbridge.domain.organization.entity.TargetDemographic;
+import com.mealbridge.domain.organization.repository.OrganizationRepository;
+import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.entity.User;
+import com.mealbridge.domain.user.entity.UserStatus;
+import com.mealbridge.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -54,8 +54,10 @@ class RegistrationIntegrationTest {
 								  "organizationType": "WELFARE_CENTER",
 								  "address": "Seoul Gangnam",
 								  "organizationPhone": "0211112222",
+								  "serviceArea": "Seoul Gangnam",
 								  "recipientCapacity": 30,
-								  "targetDemographic": "ELDERLY"
+								  "targetDemographic": "ELDERLY",
+								  "registrationNumber": "123-45-67890"
 								}
 								""".formatted(email)))
 				.andExpect(status().isCreated())
@@ -88,7 +90,7 @@ class RegistrationIntegrationTest {
 	}
 
 	@Test
-	void registerDonor_duplicateEmail_returns409() throws Exception {
+	void registerDonor_duplicateEmail_returns400() throws Exception {
 		String email = "dupdonor@mealbridge.local";
 		String body = """
 				{
@@ -99,7 +101,9 @@ class RegistrationIntegrationTest {
 				  "institutionName": "Demo School",
 				  "institutionType": "SCHOOL",
 				  "address": "Busan",
-				  "institutionPhone": "0511112222"
+				  "institutionPhone": "0511112222",
+				  "description": "School cafeteria surplus program",
+				  "businessRegistrationNumber": "123-45-67890"
 				}
 				""".formatted(email);
 
@@ -111,7 +115,7 @@ class RegistrationIntegrationTest {
 		mockMvc.perform(post("/auth/register/donor")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body))
-				.andExpect(status().isConflict());
+				.andExpect(status().isBadRequest());
 	}
 
 	private void seedSuperAdmin() {
@@ -125,6 +129,7 @@ class RegistrationIntegrationTest {
 				.phone("01000000001")
 				.role(Role.SUPER_ADMIN)
 				.status(UserStatus.ACTIVE)
+				.emailVerified(true)
 				.build());
 	}
 

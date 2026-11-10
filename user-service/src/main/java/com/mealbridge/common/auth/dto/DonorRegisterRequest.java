@@ -1,6 +1,6 @@
 package com.mealbridge.common.auth.dto;
 
-import com.mealbridge.domain.donor.DonorInstitutionType;
+import com.mealbridge.domain.donor.entity.DonorInstitutionType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +15,8 @@ public record DonorRegisterRequest(
 		@NotNull DonorInstitutionType institutionType,
 		@NotBlank @Size(max = 500) String address,
 		@NotBlank @Size(max = 32) String institutionPhone,
-		@Size(max = 1000) String description,
-		@Size(max = 64) String businessRegistrationNumber,
+		@NotBlank @Size(max = 1000) String description,
+		@NotBlank @Size(max = 64) String businessRegistrationNumber,
 		@Size(max = 64) String unitIdentifier
 ) {
 }

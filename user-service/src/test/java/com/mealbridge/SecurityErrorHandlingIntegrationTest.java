@@ -1,9 +1,9 @@
 package com.mealbridge;
 
-import com.mealbridge.domain.user.Role;
-import com.mealbridge.domain.user.User;
-import com.mealbridge.domain.user.UserRepository;
-import com.mealbridge.domain.user.UserStatus;
+import com.mealbridge.domain.user.entity.Role;
+import com.mealbridge.domain.user.entity.User;
+import com.mealbridge.domain.user.entity.UserStatus;
+import com.mealbridge.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +42,7 @@ class SecurityErrorHandlingIntegrationTest {
 						.phone("01000000001")
 						.role(Role.SUPER_ADMIN)
 						.status(UserStatus.ACTIVE)
+						.emailVerified(true)
 						.build()));
 		superAdminId = superAdmin.getId().toString();
 	}
@@ -52,14 +53,14 @@ class SecurityErrorHandlingIntegrationTest {
 						.header("X-User-Id", superAdminId)
 						.header("X-User-Role", "SUPER_ADMIN"))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.statusCode").value(404));
+				.andExpect(jsonPath("$.status_code").value(404));
 	}
 
 	@Test
-	void unknownPath_withoutAuth_returns401() throws Exception {
-		mockMvc.perform(get("/admin/registrations"))
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.statusCode").value(401));
+	void protectedPath_withoutAuth_returns403() throws Exception {
+		mockMvc.perform(get("/admin/registrations/pending"))
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.status_code").value(403));
 	}
 
 	@Test
@@ -68,6 +69,6 @@ class SecurityErrorHandlingIntegrationTest {
 						.header("X-User-Id", superAdminId)
 						.header("X-User-Role", "SUPER_ADMIN"))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.statusCode").value(400));
+				.andExpect(jsonPath("$.status_code").value(400));
 	}
 }
